@@ -22,29 +22,42 @@ namespace UserPrivilege {
 	}
 }
 
-enum Command {
-	// should be used if a command is not recognized
-	None,
-	Ping = "./commands/ping.ts"
+export enum Command {
+	// -------------------------------------------------------------------------
+	// meta commands
+	// -------------------------------------------------------------------------
+
+	None, // should be used if a command is not recognized
+	Describe, // get the description of a command
+	Usage, // get the usage of a command
+
+	// -------------------------------------------------------------------------
+	// individual commands
+	// -------------------------------------------------------------------------
+	Ping = "./commands/ping.ts",
+	Commands = "./commands/commands.ts",
 }
 
 // deno-lint-ignore no-namespace
-namespace Command {
+export namespace Command {
 	export function from_str(s: string): Command {
 		switch (s.toLowerCase()) {
 			case "ping":
 				return Command.Ping;
+			case "describe":
+				return Command.Describe;
+			case "usage":
+				return Command.Usage
+			case "commands":
+				return Command.Commands
 		}
 
 		return Command.None;
 	}
-}
 
-export interface ICommandContext {
-	highest_priv: UserPrivilege,
-	cmd: Command,
-	args: string[],
-	channel: TwitchUserBasicInfo,
+	export function get_all_commands(): string[] {
+		return ["describe", "usage", "ping", "commands"];
+	}
 }
 
 // run before constructing to know if the message actually is a command or not
@@ -52,7 +65,7 @@ export function ircmsg_is_command_fmt(ircmsg: IrcMessage, cmd_prefix: string): b
 	return ircmsg.message.split(" ")[0].startsWith(cmd_prefix);
 }
 
-export class CommandContext implements ICommandContext {
+export class CommandContext {
 	cmd: Command;
 	highest_priv: UserPrivilege;
 	args: string[];
@@ -82,5 +95,5 @@ export interface CommandResult {
 export interface CommandModule {
 	execute(ctx: CommandContext): CommandResult,
 	description(): string,
-	usage(): string
+	usage(cmd_prefix: string): string
 }

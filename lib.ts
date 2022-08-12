@@ -1,6 +1,6 @@
 import { TwitchChat, Channel } from "https://deno.land/x/tmi/mod.ts";
 import * as twitch from "./twitch/twitch.ts";
-import { CommandContext, CommandModule, ircmsg_is_command_fmt } from "./commands/Command.ts";
+import { CommandContext, CommandModule, ircmsg_is_command_fmt, Command } from "./commands/Command.ts";
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -61,12 +61,50 @@ export class Config implements IConfig {
 				case "PRIVMSG":
 					if (ircmsg_is_command_fmt(ircmsg, this.cmd_prefix)) {
 						const ctx = new CommandContext(ircmsg, this);
-						const cmd = await import(ctx.cmd.toString()) as CommandModule;
-						const res = cmd.execute(ctx);
-						if (res.is_success) {
-							c.send(res.output || "cmd succeded")
-						} else {
-							c.send("cmd failed")
+
+						// the meta commands have to have some speacial handling
+						// that is why it gets quite ugly here
+						switch (ctx.cmd) {
+							case Command.None:
+								break;
+							case Command.Describe:
+								if (ctx.args.length === 0)
+									c.send(`@${ircmsg.username} no command provided. Use ${this.cmd_prefix}describe <command>. For list of available commands, do ${this.cmd_prefix}commands.`);
+								else {
+									const cmd_being_described = Command.from_str(ctx.args[0])
+
+									if (cmd_being_described === Command.None)
+										c.send(`@${ircmsg.username} command not recognized. Use ${this.cmd_prefix}commands for list of available commands.`);
+									else {
+										const cmd = (await import(cmd_being_described.toString())).default as CommandModule;
+										const desc = cmd.description();
+										c.send(`@${ircmsg.username} ${desc}`);
+									}
+								}
+								break;
+							case Command.Usage:
+								if (ctx.args.length === 0)
+									c.send(`@${ircmsg.username} no command provided. Use ${this.cmd_prefix}usage <command>. For list of available commands, do ${this.cmd_prefix}commands.`);
+								else {
+									const cmd_whichs_usage_is_being_desc = Command.from_str(ctx.args[0])
+
+									if (cmd_whichs_usage_is_being_desc === Command.None) {
+										c.send(`@${ircmsg.username} command not recognized. Use ${this.cmd_prefix}commands for list of available commands.`);
+									} else {
+										const cmd = (await import(cmd_whichs_usage_is_being_desc.toString())).default as CommandModule;
+										const desc = cmd.usage(this.cmd_prefix);
+										c.send(`@${ircmsg.username} ${desc}`);
+									}
+								}
+								break;
+							default: {
+								const cmd = (await import(ctx.cmd.toString())).default as CommandModule;
+								const res = cmd.execute(ctx);
+								if (res.is_success)
+									c.send(res.output || "cmd succeded");
+								else
+									c.send(res.output || "cmd failed");
+							}
 						}
 						console.log(`Ran ${ctx.cmd.toString()} in ${ircmsg.channel} by ${ircmsg.username}`);
 					}

@@ -1,7 +1,7 @@
-import "https://deno.land/x/dotenv/load.ts";
+import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import { Config } from "./lib.ts";
 
-async function main() {
+async function main(): Promise<void> {
 	const bot = new Config(
 		Deno.env.get("TWITCH_LOGIN")!,
 		Deno.env.get("TWITCH_OAUTH")!,

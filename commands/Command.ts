@@ -1,5 +1,5 @@
 import { IrcMessage } from "https://deno.land/x/tmi/mod.ts";
-import { TwitchUserBasicInfo, Config } from "../lib.ts";
+import { Config, TwitchChannel, TwitchInfo } from "../lib.ts";
 
 enum UserPrivilege {
 	None,       // basic users
@@ -37,6 +37,7 @@ export enum Command {
 	Ping = "./commands/ping.ts",
 	Commands = "./commands/commands.ts",
 	New7tv = "./commands/7tv.ts",
+	Stats = "./commands/stats.ts",
 }
 
 // deno-lint-ignore no-namespace
@@ -53,39 +54,41 @@ export namespace Command {
 				return Command.Commands;
 			case "new7tv":
 				return Command.New7tv;
+			case "stats":
+				return Command.Stats;
 		}
 
 		return Command.None;
 	}
 
 	export function get_all_commands(): string[] {
-		return ["describe", "usage", "ping", "commands"];
+		return ["describe", "usage", "ping", "commands", "new7tv", "stats"];
 	}
 }
 
 // run before constructing to know if the message actually is a command or not
 export function ircmsg_is_command_fmt(ircmsg: IrcMessage, cmd_prefix: string): boolean {
-	return ircmsg.message.split(" ")[0].startsWith(cmd_prefix);
+	return ircmsg.message.startsWith(cmd_prefix);
 }
 
 export class CommandContext {
 	cmd: Command;
 	highest_priv: UserPrivilege;
 	args: string[];
-	channel: TwitchUserBasicInfo;
+	channel: TwitchChannel;
+	twitch_info: TwitchInfo;
 
 	constructor(ircmsg: IrcMessage, cfg: Config) {
-		const msg_split = ircmsg.message.split(" ");
+		let msg_split = ircmsg.message.split(" ");
+		// allow prefixes with 1 space in them
+		if (cfg.cmd_prefix.includes(" "))
+			msg_split = [[msg_split[0], msg_split[1]].join(" "), ...msg_split.slice(2)];
 		this.cmd = Command.from_str(msg_split[0].slice(cfg.cmd_prefix.length));
 		this.args = msg_split.slice(1);
 
 		this.highest_priv = UserPrivilege.from_ircmsg_badges_tag(ircmsg.tags.flags);
-
-		// TODO: redo this to be less expensive lol
-		const channel_id = cfg.channels
-			.filter(c => c.login === ircmsg.channel)
-			.map(c => c.id)[0]
-		this.channel = { nickname: ircmsg.channel.slice(1), id: channel_id };
+		this.channel = cfg.channels.filter(c => c.nickname === ircmsg.channel.slice(1))[0];
+		this.twitch_info = cfg.twitch_info;
 	}
 }
 

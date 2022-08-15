@@ -1,4 +1,4 @@
-export interface Data {
+export interface HelixUsersData {
 	id: string;
 	login: string;
 	display_name: string;
@@ -13,5 +13,31 @@ export interface Data {
 }
 
 export interface HelixUsers {
-	data: Data[];
+	data: HelixUsersData[];
+}
+
+export interface HelixChannelData {
+	id: string;
+	user_id: string;
+	user_login: string;
+	user_name: string;
+	game_id: string;
+	game_name: string;
+	type: string;
+	title: string;
+	viewer_count: number;
+	started_at: Date;
+	language: string;
+	thumbnail_url: string;
+	tag_ids: string[];
+	is_mature: boolean;
+}
+
+export interface Pagination {
+	cursor: string;
+}
+
+export interface HelixChannel {
+	data: HelixChannelData[];
+	pagination: Pagination;
 }

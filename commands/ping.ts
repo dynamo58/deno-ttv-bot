@@ -7,7 +7,7 @@ const Ping: CommandModule = {
 
 		return await {
 			is_success: true,
-			output: `Pong! Uptime: ${hrs.toFixed(2)} hrs.`,
+			output: `Pong! Running for ${hrs.toFixed(2)} hrs.`,
 		}
 	},
 

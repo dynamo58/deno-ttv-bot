@@ -7,10 +7,17 @@ export interface TwitchUserBasicInfo {
 	id: number,
 }
 
-export interface TwitchChannel {
-	login: string,
-	id: number,
+export interface TwitchChannel extends TwitchUserBasicInfo {
 	client?: Channel,
+	// statistics about a live broadcast that have to be kept all the time
+	// null if channel isn't live 
+	uptime_stats: {
+		messages_sent: number,
+		games_played: string[],
+		startup_time: Date,
+		// map between the user twitch ids and their message counts
+		user_counts: Map<number, number>
+	} | null,
 }
 
 export interface TwitchInfo {
@@ -33,11 +40,13 @@ export class Config implements IConfig {
 	channels: TwitchChannel[];
 	twitch_info: TwitchInfo;
 	cmd_prefix: string;
+	disregarded_users: string[];
 
 	constructor(twitch_login: string, twitch_oauth: string, twitch_client_id: string, cmd_prefix: string) {
 		this.cmd_prefix = cmd_prefix;
 		this.client = new TwitchChat(twitch_oauth, twitch_login);
 		this.channels = [];
+		this.disregarded_users = [];
 		this.twitch_info = {
 			login: twitch_login,
 			oauth: twitch_oauth,
@@ -45,9 +54,64 @@ export class Config implements IConfig {
 		}
 	}
 
-	async add_channel(channel: string) {
-		const channel_id = await twitch.id_from_nick(this.twitch_info, channel)
-		this.channels.push({ login: channel, id: channel_id });
+	async add_channel(channel_name: string) {
+		const channel = await twitch.get_channel(this.twitch_info, channel_name);
+
+		// if channel is not live
+		if (channel.data.length === 0) {
+			const channel_id = await twitch.id_from_nick(this.twitch_info, channel_name);
+			this.channels.push({ nickname: channel_name, id: channel_id, uptime_stats: null });
+			return;
+		}
+
+		// if channel is live
+		this.channels.push({
+			nickname: channel.data[0].user_login,
+			id: parseInt(channel.data[0].user_id),
+			uptime_stats: {
+				messages_sent: 0,
+				games_played: [channel.data[0].game_name],
+				startup_time: new Date(channel.data[0].started_at),
+				user_counts: new Map<number, number>()
+			}
+		})
+	}
+
+	async save_stats_to_file(channel: TwitchChannel) {
+		await Deno.writeTextFile(
+			`./cache/${(new Date()).toISOString()}.json`,
+			JSON.stringify(channel)
+		);
+	}
+
+	async channel_info_loop_fetch(channel_idx: number) {
+		const r = await twitch.get_channel(this.twitch_info, this.channels[channel_idx].nickname);
+		console.log(`Fetched info for channel ${this.channels[channel_idx].nickname}`);
+
+		if (r.data.length === 0) {
+			// channel is offline
+			if (this.channels[channel_idx].uptime_stats !== null) {
+				// channel just went offline
+				await this.save_stats_to_file(this.channels[channel_idx]);
+			}
+			this.channels[channel_idx].uptime_stats = null;
+			return;
+		}
+
+		if (this.channels[channel_idx].uptime_stats === null) {
+			// channel just went live
+			this.channels[channel_idx].uptime_stats = {
+				messages_sent: 0,
+				games_played: [r.data[0].game_name],
+				startup_time: new Date(r.data[0].started_at),
+				user_counts: new Map<number, number>()
+			}
+		} else {
+			// channel has been live for some time
+
+			if (!this.channels[channel_idx].uptime_stats!.games_played.includes(r.data[0].game_name))
+				this.channels[channel_idx].uptime_stats!.games_played.push(r.data[0].game_name);
+		}
 	}
 
 	async join_channels(channels: string[]) {
@@ -55,19 +119,13 @@ export class Config implements IConfig {
 			await this.add_channel(c);
 	}
 
-	async listen_channel(c: Channel) {
+	async listen_channel(c: Channel, channel_idx: number) {
 		for await (const ircmsg of c) {
-			if (ircmsg.message.includes("gQueen"))
-				c.send(`@${ircmsg.username} BOOBA`)
-
-			if (ircmsg.username === "aFinnBot" &&
-				ircmsg.message.includes("BOOBA")
-			)
-				c.send("gQueen");
-
 			switch (ircmsg.command) {
 				case "PRIVMSG":
-					if (ircmsg_is_command_fmt(ircmsg, this.cmd_prefix)) {
+					if (ircmsg_is_command_fmt(ircmsg, this.cmd_prefix) &&
+						!this.disregarded_users.includes(ircmsg.username)
+					) {
 						const ctx = new CommandContext(ircmsg, this);
 						// the meta commands have to have some speacial handling
 						// that is why it gets quite ugly here
@@ -115,18 +173,36 @@ export class Config implements IConfig {
 						}
 						console.log(`Ran ${ctx.cmd.toString()} in ${ircmsg.channel} by ${ircmsg.username}`);
 					}
+
+					if (this.channels[channel_idx].uptime_stats !== null) {
+						this.channels[channel_idx].uptime_stats!.messages_sent += 1;
+						const user_id = parseInt(ircmsg.tags["user-id"]);
+						const curr = this.channels[channel_idx].uptime_stats!.user_counts.get(user_id);
+
+						if (curr)
+							this.channels[channel_idx].uptime_stats!.user_counts.set(user_id, curr + 1);
+						else
+							this.channels[channel_idx].uptime_stats!.user_counts.set(user_id, 1);
+					}
 			}
 		}
+	}
+
+	disregard_users(users: string[]) {
+		this.disregarded_users = users;
 	}
 
 	async run() {
 		Deno.env.set("startup_time", (new Date()).getTime().toString())
 		await this.client.connect();
 
-		this.channels.map(c => {
-			const channel_client = this.client.joinChannel(c.login);
-			this.listen_channel(channel_client);
-			console.log(`Joined channel ${c.login}`);
+		this.channels.map((c, idx) => {
+			const channel_client = this.client.joinChannel(c.nickname);
+			this.listen_channel(channel_client, idx);
+			console.log(`Joined channel ${c.nickname}`);
+			setInterval(() => {
+				this.channel_info_loop_fetch(idx);
+			}, 5 * 60 * 1000)
 
 			return {
 				...c,

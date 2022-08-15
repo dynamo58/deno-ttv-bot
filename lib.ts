@@ -1,5 +1,5 @@
 import { TwitchChat, Channel } from "https://deno.land/x/tmi/mod.ts";
-import * as twitch from "./twitch/twitch.ts";
+import * as twitch from "./apis/twitch.ts";
 import { CommandContext, CommandModule, ircmsg_is_command_fmt, Command } from "./commands/Command.ts";
 
 export interface TwitchUserBasicInfo {
@@ -57,11 +57,18 @@ export class Config implements IConfig {
 
 	async listen_channel(c: Channel) {
 		for await (const ircmsg of c) {
+			if (ircmsg.message.includes("gQueen"))
+				c.send(`@${ircmsg.username} BOOBA`)
+
+			if (ircmsg.username === "aFinnBot" &&
+				ircmsg.message.includes("BOOBA")
+			)
+				c.send("gQueen");
+
 			switch (ircmsg.command) {
 				case "PRIVMSG":
 					if (ircmsg_is_command_fmt(ircmsg, this.cmd_prefix)) {
 						const ctx = new CommandContext(ircmsg, this);
-
 						// the meta commands have to have some speacial handling
 						// that is why it gets quite ugly here
 						switch (ctx.cmd) {
@@ -99,7 +106,7 @@ export class Config implements IConfig {
 								break;
 							default: {
 								const cmd = (await import(ctx.cmd.toString())).default as CommandModule;
-								const res = cmd.execute(ctx);
+								const res = await cmd.execute(ctx);
 								if (res.is_success)
 									c.send(res.output || "cmd succeded");
 								else

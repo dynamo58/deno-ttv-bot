@@ -1,10 +1,10 @@
 import { Command, CommandContext, CommandResult, CommandModule } from "./Command.ts";
 
 const Commands: CommandModule = {
-	execute(_: CommandContext): CommandResult {
+	async execute(_: CommandContext): Promise<CommandResult> {
 		const global_cmds = Command.get_all_commands().join(", ");
 
-		return {
+		return await {
 			is_success: true,
 			output: `Global commands: ${global_cmds}`,
 		}

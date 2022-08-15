@@ -36,6 +36,7 @@ export enum Command {
 	// -------------------------------------------------------------------------
 	Ping = "./commands/ping.ts",
 	Commands = "./commands/commands.ts",
+	New7tv = "./commands/7tv.ts",
 }
 
 // deno-lint-ignore no-namespace
@@ -47,9 +48,11 @@ export namespace Command {
 			case "describe":
 				return Command.Describe;
 			case "usage":
-				return Command.Usage
+				return Command.Usage;
 			case "commands":
-				return Command.Commands
+				return Command.Commands;
+			case "new7tv":
+				return Command.New7tv;
 		}
 
 		return Command.None;
@@ -82,7 +85,7 @@ export class CommandContext {
 		const channel_id = cfg.channels
 			.filter(c => c.login === ircmsg.channel)
 			.map(c => c.id)[0]
-		this.channel = { nickname: ircmsg.channel, id: channel_id };
+		this.channel = { nickname: ircmsg.channel.slice(1), id: channel_id };
 	}
 }
 
@@ -93,7 +96,7 @@ export interface CommandResult {
 
 // all of the components (functions) that a command should have 
 export interface CommandModule {
-	execute(ctx: CommandContext): CommandResult,
+	execute(ctx: CommandContext): Promise<CommandResult>,
 	description(): string,
 	usage(cmd_prefix: string): string
 }

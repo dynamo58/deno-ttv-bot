@@ -1,11 +1,11 @@
 import { CommandContext, CommandModule, CommandResult } from "./Command.ts";
 
 const Ping: CommandModule = {
-	execute(_: CommandContext): CommandResult {
+	async execute(_: CommandContext): Promise<CommandResult> {
 		const uptime_mls = (new Date()).valueOf() - (new Date(parseInt(Deno.env.get("startup_time")!))).valueOf();
 		const hrs = uptime_mls / (1_000 * 60 * 60);
 
-		return {
+		return await {
 			is_success: true,
 			output: `Pong! Uptime: ${hrs.toFixed(2)} hrs.`,
 		}

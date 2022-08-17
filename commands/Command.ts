@@ -77,6 +77,7 @@ export class CommandContext {
 	args: string[];
 	channel: TwitchChannel;
 	twitch_info: TwitchInfo;
+	startup_time: Date;
 
 	constructor(ircmsg: IrcMessage, cfg: Config) {
 		let msg_split = ircmsg.message.split(" ");
@@ -89,6 +90,7 @@ export class CommandContext {
 		this.highest_priv = UserPrivilege.from_ircmsg_badges_tag(ircmsg.tags.flags);
 		this.channel = cfg.channels.filter(c => c.nickname === ircmsg.channel.slice(1))[0];
 		this.twitch_info = cfg.twitch_info;
+		this.startup_time = cfg.startup_time!;
 	}
 }
 

@@ -38,6 +38,7 @@ export class Config {
 	cmd_prefix: string;
 	disregarded_users: string[];
 	loopback_address: string | null;
+	startup_time: Date | null;
 
 	constructor(twitch_login: string, twitch_oauth: string, twitch_client_id: string, twitch_client_secret: string, cmd_prefix: string) {
 		this.cmd_prefix = cmd_prefix;
@@ -51,6 +52,7 @@ export class Config {
 			client_id: twitch_client_id,
 			client_secret: twitch_client_secret,
 		};
+		this.startup_time = null;
 	}
 
 	// async get_loopback_address(): Promise<string> {
@@ -247,7 +249,7 @@ export class Config {
 	// }
 
 	async run() {
-		Deno.env.set("startup_time", (new Date()).getTime().toString());
+		this.startup_time = new Date();
 		// this.loopback_address = await this.get_loopback_address();
 		await this.client.connect();
 

@@ -1,6 +1,6 @@
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import { Config } from "./lib.ts";
-// import { Application, Router } from "https://deno.land/x/oak/mod.ts";
+import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 
 
 const PORT = (() => {
@@ -11,38 +11,38 @@ const PORT = (() => {
 
 	return 3000;
 })()
-Deno.env.set("IS_LOCAL_DEVELOPMENT", "1");
-Deno.env.set("PORT", PORT.toString());
+// Deno.env.set("IS_LOCAL_DEVELOPMENT", "1");
+// Deno.env.set("PORT", PORT.toString());
 
-// const listen_local = () => {
-// 	const router = new Router();
-// 	router.get("/", (ctx) => {
-// 		ctx.response.body = "Hello :)";
-// 	});
+const listen_local = () => {
+	const router = new Router();
+	router.get("/", (ctx) => {
+		ctx.response.body = "Hello :)";
+	});
 
-// 	router.post("/notification", async (ctx) => {
-// 		console.log(ctx.request.body);
+	// router.post("/notification", async (ctx) => {
+	// 	console.log(ctx.request.body);
 
-// 		const body = ctx.request.body();
+	// 	const body = ctx.request.body();
 
-// 		if (body.type === "json") {
+	// 	if (body.type === "json") {
 
-// 			console.log(await body.value);
-// 			console.log("Sucessfully established EventSub webhooks");
-// 		}
+	// 		console.log(await body.value);
+	// 		console.log("Sucessfully established EventSub webhooks");
+	// 	}
 
 
-// 		// if (ctx.request.body.event) {
-// 		// console.log(req)
-// 		// }
-// 	});
+	// 	// if (ctx.request.body.event) {
+	// 	// console.log(req)
+	// 	// }
+	// });
 
-// 	const app = new Application();
-// 	app.use(router.routes());
-// 	app.use(router.allowedMethods());
+	const app = new Application();
+	app.use(router.routes());
+	app.use(router.allowedMethods());
 
-// 	app.listen({ port: PORT });
-// }
+	app.listen({ port: PORT });
+}
 
 
 async function main(): Promise<void> {
@@ -63,6 +63,7 @@ async function main(): Promise<void> {
 }
 
 try {
+	listen_local();
 	await main();
 } catch (e) {
 	console.error(e);

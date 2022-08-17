@@ -1,4 +1,4 @@
-import { IrcMessage } from "https://deno.land/x/tmi/mod.ts";
+import { IrcMessage } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import { Config, TwitchChannel, TwitchInfo } from "../lib.ts";
 
 enum UserPrivilege {

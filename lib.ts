@@ -1,6 +1,10 @@
-import { TwitchChat, Channel } from "https://deno.land/x/tmi/mod.ts";
+import { TwitchChat, Channel } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import * as twitch from "./apis/twitch.ts";
 import { CommandContext, CommandModule, ircmsg_is_command_fmt, Command } from "./commands/Command.ts";
+// import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
+// import { sleep } from "https://deno.land/x/sleep/mod.ts";
+// import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -24,39 +28,58 @@ export interface TwitchInfo {
 	login: string,
 	oauth: string,
 	client_id: string,
+	client_secret: string,
 }
 
-export interface IConfig {
-	twitch_info: TwitchInfo,
-	client: TwitchChat,
-	channels: TwitchChannel[],
-	cmd_prefix: string;
-	add_channel(channel: string): void,
-	join_channels(channels: string[]): void,
-}
-
-export class Config implements IConfig {
+export class Config {
 	client: TwitchChat;
 	channels: TwitchChannel[];
 	twitch_info: TwitchInfo;
 	cmd_prefix: string;
 	disregarded_users: string[];
+	loopback_address: string | null;
 
-	constructor(twitch_login: string, twitch_oauth: string, twitch_client_id: string, cmd_prefix: string) {
+	constructor(twitch_login: string, twitch_oauth: string, twitch_client_id: string, twitch_client_secret: string, cmd_prefix: string) {
 		this.cmd_prefix = cmd_prefix;
 		this.client = new TwitchChat(twitch_oauth, twitch_login);
 		this.channels = [];
 		this.disregarded_users = [];
+		this.loopback_address = null;
 		this.twitch_info = {
 			login: twitch_login,
 			oauth: twitch_oauth,
 			client_id: twitch_client_id,
-		}
+			client_secret: twitch_client_secret,
+		};
 	}
+
+	// async get_loopback_address(): Promise<string> {
+	// 	if (Deno.env.get("IS_LOCAL_DEVELOPMENT")) {
+	// 		let loopback: string | null = null;
+
+	// 		const ngrok = await Ngrok.create({
+	// 			protocol: "http",
+	// 			port: parseInt(Deno.env.get("PORT")!),
+	// 		})
+
+	// 		ngrok.addEventListener("ready", (event) => {
+	// 			loopback = event.detail;
+	// 		});
+
+	// 		while (loopback === null) {
+	// 			await sleep(0.1);
+	// 		}
+
+	// 		console.log(`Got ngrok tunnel address`);
+	// 		return loopback!;
+
+	// 	} else {
+	// 		return "DEPLOY_URL";
+	// 	}
+	// }
 
 	async add_channel(channel_name: string) {
 		const channel = await twitch.get_channel(this.twitch_info, channel_name);
-
 		// if channel is not live
 		if (channel.data.length === 0) {
 			const channel_id = await twitch.id_from_nick(this.twitch_info, channel_name);
@@ -192,8 +215,40 @@ export class Config implements IConfig {
 		this.disregarded_users = users;
 	}
 
+	// async init_pubsub() {
+	// 	try {
+	// 		const ws: WebSocketClient = new StandardWebSocketClient("wss://pubsub-edge.twitch.tv");
+	// 		const auth = await twitch.get_eventsub_accesstoken(this.twitch_info);
+	// 		ws.on("open", () => {
+	// 			console.log(`Opened WebSocket connection with Twitch PubSub`);
+
+	// 			setInterval(() => {
+	// 				ws.send(JSON.stringify({ type: "PING" }));
+	// 			}, 4 * 60 * 1000);
+
+	// 			ws.send(JSON.stringify({
+	// 				"type": "LISTEN",
+	// 				"nonce": Deno.env.get("SECRET")!,
+	// 				"data": {
+	// 					"topics": [`channel-subscribe-events-v1.40295380`],
+	// 					"auth_token": auth,
+	// 				}
+	// 			}))
+	// 		});
+
+	// 		ws.on("message", (msg) => {
+	// 			if (!(JSON.parse(msg.data).type === "PONG")) {
+	// 				console.log("xd", JSON.parse(msg.data))
+	// 			}
+	// 		})
+	// 	} catch (e) {
+	// 		console.log(e)
+	// 	}
+	// }
+
 	async run() {
-		Deno.env.set("startup_time", (new Date()).getTime().toString())
+		Deno.env.set("startup_time", (new Date()).getTime().toString());
+		// this.loopback_address = await this.get_loopback_address();
 		await this.client.connect();
 
 		this.channels.map((c, idx) => {
@@ -202,13 +257,16 @@ export class Config implements IConfig {
 			console.log(`Joined channel ${c.nickname}`);
 			setInterval(() => {
 				this.channel_info_loop_fetch(idx);
-			}, 5 * 60 * 1000)
+			}, 2 * 60 * 1000)
 
 			return {
 				...c,
 				client: channel_client
 			}
 		});
+
+		// await this.init_pubsub();
+		// await twitch.request_eventsub_subscription(this.twitch_info, this.loopback_address!, 40295380);
 	}
 }
 

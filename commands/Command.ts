@@ -1,6 +1,11 @@
 import { IrcMessage } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import { Config, TwitchChannel, TwitchInfo } from "../lib.ts";
 
+import Ping from "./ping.ts";
+import New7Tv from "./7tv.ts";
+import Stats from "./stats.ts";
+import Commands from "./commands.ts";
+
 enum UserPrivilege {
 	None,       // basic users
 	VIP,        // VIPs
@@ -34,10 +39,10 @@ export enum Command {
 	// -------------------------------------------------------------------------
 	// individual commands
 	// -------------------------------------------------------------------------
-	Ping = "./commands/ping.ts",
-	Commands = "./commands/commands.ts",
-	New7tv = "./commands/7tv.ts",
-	Stats = "./commands/stats.ts",
+	Ping,
+	Commands,
+	New7tv,
+	Stats,
 }
 
 // deno-lint-ignore no-namespace
@@ -63,6 +68,19 @@ export namespace Command {
 
 	export function get_all_commands(): string[] {
 		return ["describe", "usage", "ping", "commands", "new7tv", "stats"];
+	}
+
+	export function get_module(c: Command) {
+		switch (c) {
+			case Command.Ping:
+				return Ping;
+			case Command.New7tv:
+				return New7Tv;
+			case Command.Stats:
+				return Stats;
+			case Command.Commands:
+				return Commands;
+		}
 	}
 }
 

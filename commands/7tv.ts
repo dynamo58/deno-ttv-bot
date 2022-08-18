@@ -2,7 +2,7 @@ import { CommandContext, CommandModule, CommandResult } from "./Command.ts";
 import { get_7tv_emotes } from "../apis/adamcy.ts";
 
 
-const Ping: CommandModule = {
+const New7Tv: CommandModule = {
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const emotes = await get_7tv_emotes(ctx.channel.nickname);
 
@@ -25,4 +25,4 @@ const Ping: CommandModule = {
 	}
 }
 
-export default Ping;
+export default New7Tv;

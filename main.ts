@@ -1,7 +1,5 @@
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import { Config } from "./lib.ts";
-import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
-
 
 const PORT = (() => {
 	const p = Deno.env.get("PORT");
@@ -11,38 +9,11 @@ const PORT = (() => {
 
 	return 3000;
 })()
-// Deno.env.set("IS_LOCAL_DEVELOPMENT", "1");
-// Deno.env.set("PORT", PORT.toString());
 
-const listen_local = () => {
-	const router = new Router();
-	router.get("/", (ctx) => {
-		ctx.response.body = "Hello :)";
-	});
-
-	// router.post("/notification", async (ctx) => {
-	// 	console.log(ctx.request.body);
-
-	// 	const body = ctx.request.body();
-
-	// 	if (body.type === "json") {
-
-	// 		console.log(await body.value);
-	// 		console.log("Sucessfully established EventSub webhooks");
-	// 	}
-
-
-	// 	// if (ctx.request.body.event) {
-	// 	// console.log(req)
-	// 	// }
-	// });
-
-	const app = new Application();
-	app.use(router.routes());
-	app.use(router.allowedMethods());
-
-	app.listen({ port: PORT });
-}
+try {
+	Deno.env.set("PORT", PORT.toString());
+	Deno.env.set("IS_LOCAL_DEVELOPMENT", "1");
+} catch { console.log(`Environment not suitable for env writing`) }
 
 
 async function main(): Promise<void> {
@@ -63,7 +34,6 @@ async function main(): Promise<void> {
 }
 
 try {
-	listen_local();
 	await main();
 } catch (e) {
 	console.error(e);

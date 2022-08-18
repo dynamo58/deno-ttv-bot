@@ -4,6 +4,7 @@ import { CommandContext, CommandModule, ircmsg_is_command_fmt, Command } from ".
 // import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
 // import { sleep } from "https://deno.land/x/sleep/mod.ts";
 // import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 
 
 export interface TwitchUserBasicInfo {
@@ -103,10 +104,16 @@ export class Config {
 	}
 
 	async save_stats_to_file(channel: TwitchChannel) {
-		await Deno.writeTextFile(
-			`./cache/${(new Date()).toISOString()}.json`,
-			JSON.stringify(channel)
-		);
+		try {
+			await Deno.writeTextFile(
+				`./cache/${(new Date()).toISOString()}.json`,
+				JSON.stringify(channel)
+			);
+			console.log(`Saved stats for ${channel.nickname}.`);
+		} catch {
+			console.log(`Failed saving stats for ${channel.nickname}.`);
+		}
+
 	}
 
 	async channel_info_loop_fetch(channel_idx: number) {
@@ -142,6 +149,36 @@ export class Config {
 	async join_channels(channels: string[]) {
 		for (const c of channels)
 			await this.add_channel(c);
+	}
+
+	listen_local() {
+		const router = new Router();
+		router.get("/", (ctx) => {
+			ctx.response.body = "Hello :)";
+		});
+
+		// router.post("/notification", async (ctx) => {
+		// 	console.log(ctx.request.body);
+
+		// 	const body = ctx.request.body();
+
+		// 	if (body.type === "json") {
+
+		// 		console.log(await body.value);
+		// 		console.log("Sucessfully established EventSub webhooks");
+		// 	}
+
+
+		// 	// if (ctx.request.body.event) {
+		// 	// console.log(req)
+		// 	// }
+		// });
+
+		const app = new Application();
+		app.use(router.routes());
+		app.use(router.allowedMethods());
+
+		app.listen({ port: parseInt(Deno.env.get("PORT")!) });
 	}
 
 	async listen_channel(c: Channel, channel_idx: number) {
@@ -188,8 +225,11 @@ export class Config {
 								}
 								break;
 							default: {
-								const cmd = (await import(ctx.cmd.toString())).default as CommandModule;
-								const res = await cmd.execute(ctx);
+
+								const cmd = Command.get_module(ctx.cmd);
+								const res = await cmd!.execute(ctx);
+								// const cmd = (await import(ctx.cmd.toString())).default as CommandModule;
+								// const res = await cmd.execute(ctx);
 								if (res.is_success)
 									c.send(res.output || "cmd succeded");
 								else
@@ -250,8 +290,9 @@ export class Config {
 
 	async run() {
 		this.startup_time = new Date();
-		// this.loopback_address = await this.get_loopback_address();
 		await this.client.connect();
+		this.listen_local();
+		// this.loopback_address = await this.get_loopback_address();
 
 		this.channels.map((c, idx) => {
 			const channel_client = this.client.joinChannel(c.nickname);

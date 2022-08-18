@@ -41,3 +41,23 @@ export interface HelixChannel {
 	data: HelixChannelData[];
 	pagination: Pagination;
 }
+
+export interface TmiChatters {
+	_links: Links
+	chatter_count: number
+	chatters: Chatters
+}
+
+// deno-lint-ignore no-empty-interface
+export interface Links { }
+
+export interface Chatters {
+	broadcaster: string[]
+	vips: string[]
+	moderators: string[]
+	staff: string[]
+	admins: string[]
+	global_mods: string[]
+	viewers: string[]
+}
+

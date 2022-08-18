@@ -5,12 +5,13 @@ import Ping from "./ping.ts";
 import New7Tv from "./7tv.ts";
 import Stats from "./stats.ts";
 import Commands from "./commands.ts";
+import Tf from "./tf.ts"
 
 enum UserPrivilege {
-	None,       // basic users
-	VIP,        // VIPs
-	Moderator,  // moderators
-	Broadcaster, // the streamer himself
+	None = 0,       // basic users
+	VIP = 1,        // VIPs
+	Moderator = 2,  // moderators
+	Broadcaster = 3, // the streamer himself
 }
 
 // deno-lint-ignore no-namespace
@@ -39,10 +40,11 @@ export enum Command {
 	// -------------------------------------------------------------------------
 	// individual commands
 	// -------------------------------------------------------------------------
-	Ping,
-	Commands,
-	New7tv,
-	Stats,
+	Ping = "ping",
+	Commands = "commands",
+	New7tv = "new7tv",
+	Stats = "stats",
+	Tf = "tf",
 }
 
 // deno-lint-ignore no-namespace
@@ -61,13 +63,15 @@ export namespace Command {
 				return Command.New7tv;
 			case "stats":
 				return Command.Stats;
+			case "tf":
+				return Command.Tf;
 		}
 
 		return Command.None;
 	}
 
 	export function get_all_commands(): string[] {
-		return ["describe", "usage", "ping", "commands", "new7tv", "stats"];
+		return ["describe", "usage", "ping", "commands", "new7tv", "stats", "tf"];
 	}
 
 	export function get_module(c: Command) {
@@ -80,6 +84,8 @@ export namespace Command {
 				return Stats;
 			case Command.Commands:
 				return Commands;
+			case Command.Tf:
+				return Tf;
 		}
 	}
 }
@@ -96,6 +102,46 @@ export class CommandContext {
 	channel: TwitchChannel;
 	twitch_info: TwitchInfo;
 	startup_time: Date;
+
+	// get a map of keyword arguments
+	// allowed delimiters: (none), '', "",
+	kwargs(): Map<string, string> {
+		const args = this.args.join(' ');
+		const map = new Map<string, string>();
+		let curr_idx = 0;
+		while (curr_idx + 1 < args.length) {
+			const slice = args.slice(curr_idx);
+			let kwarg = null;
+			const eq_idx = slice.indexOf('=');
+
+			if (eq_idx === -1) return map;
+
+			const pre_eq_idx_space_idx = slice.slice(0, eq_idx).lastIndexOf('\ ');
+			kwarg = slice.slice(pre_eq_idx_space_idx + 1, eq_idx);
+
+			let delimiter: string | null = null;
+			if (slice[eq_idx + 1] === '\'') delimiter = '\'';
+			if (slice[eq_idx + 1] === '\"') delimiter = '\"';
+
+			if (delimiter === null) {
+				let next_space_idx = slice.slice(eq_idx + 1).indexOf('\ ');
+				if (next_space_idx === -1) next_space_idx = slice.length;
+				else next_space_idx += eq_idx + 1;
+				map.set(kwarg.toLowerCase(), slice.slice(eq_idx + 1, next_space_idx));
+				curr_idx += next_space_idx + 1;
+				continue;
+			} else {
+				let next_delimiter_idx = slice.slice(eq_idx + 2).indexOf(delimiter);
+				if (next_delimiter_idx === -1) next_delimiter_idx = slice.length;
+				else next_delimiter_idx += eq_idx + 2;
+				map.set(kwarg.toLowerCase(), slice.slice(eq_idx + 2, next_delimiter_idx));
+				console.log(`got ${slice.slice(eq_idx + 2, next_delimiter_idx)}`)
+				curr_idx += next_delimiter_idx + 1;
+				continue;
+			}
+		}
+		return map;
+	}
 
 	constructor(ircmsg: IrcMessage, cfg: Config) {
 		let msg_split = ircmsg.message.split(" ");

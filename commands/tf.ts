@@ -1,4 +1,3 @@
-import { DEFAULT_CHUNK_SIZE } from "https://deno.land/x/oak@v10.6.0/util.ts";
 import { CommandContext, CommandModule, CommandResult } from "./Command.ts";
 import * as twitch from "../apis/twitch.ts";
 
@@ -6,7 +5,15 @@ import * as twitch from "../apis/twitch.ts";
 const DEFAULT_COUNT: number = 10;
 
 const Tf: CommandModule = {
+	sufficient_privilege: 1,
+
 	async execute(ctx: CommandContext): Promise<CommandResult> {
+		if (ctx.highest_priv < this.sufficient_privilege)
+			return {
+				is_success: false,
+				output: "You must be at least VIP to use this command.",
+			}
+
 		const kwargs = ctx.kwargs();
 		// TODO: check for negativity
 		let count: number | null = null;

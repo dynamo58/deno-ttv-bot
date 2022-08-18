@@ -3,6 +3,8 @@ import { get_7tv_emotes } from "../apis/adamcy.ts";
 
 
 const New7Tv: CommandModule = {
+	sufficient_privilege: 0,
+
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const emotes = await get_7tv_emotes(ctx.channel.nickname);
 

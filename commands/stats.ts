@@ -17,6 +17,8 @@ const get_most_active_chatter_nickname = async (t: TwitchInfo, chatter_counts: M
 }
 
 const Stats: CommandModule = {
+	sufficient_privilege: 0,
+
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		if (ctx.channel.uptime_stats === null)
 			return await {

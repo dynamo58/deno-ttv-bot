@@ -7,25 +7,22 @@ import Stats from "./stats.ts";
 import Commands from "./commands.ts";
 import Tf from "./tf.ts"
 
-enum UserPrivilege {
+export enum UserPrivilege {
 	None = 0,       // basic users
 	VIP = 1,        // VIPs
 	Moderator = 2,  // moderators
 	Broadcaster = 3, // the streamer himself
 }
 
-// deno-lint-ignore no-namespace
-namespace UserPrivilege {
-	export function from_ircmsg_badges_tag(badges_str: string): UserPrivilege {
-		if (badges_str.includes("broadcaster"))
-			return UserPrivilege.VIP;
-		if (badges_str.includes("vip"))
-			return UserPrivilege.VIP;
-		if (badges_str.includes("moderator"))
-			return UserPrivilege.VIP;
+export function user_priv_from_ircmsg_badges_tag(badges_str: string): UserPrivilege {
+	if (badges_str.includes("broadcaster"))
+		return UserPrivilege.VIP;
+	if (badges_str.includes("vip"))
+		return UserPrivilege.VIP;
+	if (badges_str.includes("moderator"))
+		return UserPrivilege.VIP;
 
-		return UserPrivilege.None;
-	}
+	return UserPrivilege.None;
 }
 
 export enum Command {
@@ -151,7 +148,7 @@ export class CommandContext {
 		this.cmd = Command.from_str(msg_split[0].slice(cfg.cmd_prefix.length));
 		this.args = msg_split.slice(1);
 
-		this.highest_priv = UserPrivilege.from_ircmsg_badges_tag(ircmsg.tags.flags);
+		this.highest_priv = user_priv_from_ircmsg_badges_tag(ircmsg.tags.flags);
 		this.channel = cfg.channels.filter(c => c.nickname === ircmsg.channel.slice(1))[0];
 		this.twitch_info = cfg.twitch_info;
 		this.startup_time = cfg.startup_time!;
@@ -165,6 +162,7 @@ export interface CommandResult {
 
 // all of the components (functions) that a command should have 
 export interface CommandModule {
+	sufficient_privilege: UserPrivilege;
 	execute(ctx: CommandContext): Promise<CommandResult>,
 	description(): string,
 	usage(cmd_prefix: string): string

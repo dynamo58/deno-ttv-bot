@@ -203,7 +203,7 @@ export class Config {
 									if (cmd_being_described === Command.None)
 										c.send(`@${ircmsg.username} command not recognized. Use ${this.cmd_prefix}commands for list of available commands.`);
 									else {
-										const cmd = (await import(cmd_being_described.toString())).default as CommandModule;
+										const cmd = Command.get_module(Command.from_str(ctx.args[0]))!;
 										const desc = cmd.description();
 										c.send(`@${ircmsg.username} ${desc}`);
 									}
@@ -218,7 +218,7 @@ export class Config {
 									if (cmd_whichs_usage_is_being_desc === Command.None) {
 										c.send(`@${ircmsg.username} command not recognized. Use ${this.cmd_prefix}commands for list of available commands.`);
 									} else {
-										const cmd = (await import(cmd_whichs_usage_is_being_desc.toString())).default as CommandModule;
+										const cmd = Command.get_module(Command.from_str(ctx.args[0]))!;
 										const desc = cmd.usage(this.cmd_prefix);
 										c.send(`@${ircmsg.username} ${desc}`);
 									}

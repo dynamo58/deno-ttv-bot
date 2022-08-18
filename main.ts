@@ -1,19 +1,19 @@
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import { Config } from "./lib.ts";
 
-const PORT = (() => {
-	const p = Deno.env.get("PORT");
-	if (p) {
-		return parseInt(p);
-	}
+// const PORT = (() => {
+// 	const p = Deno.env.get("PORT");
+// 	if (p) {
+// 		return parseInt(p);
+// 	}
 
-	return 3000;
-})()
+// 	return 3000;
+// })()
 
-try {
-	Deno.env.set("PORT", PORT.toString());
-	Deno.env.set("IS_LOCAL_DEVELOPMENT", "1");
-} catch { console.log(`Environment not suitable for env writing`) }
+// try {
+// 	Deno.env.set("PORT", PORT.toString());
+// 	Deno.env.set("IS_LOCAL_DEVELOPMENT", "1");
+// } catch { console.log(`Environment not suitable for env writing`) }
 
 
 async function main(): Promise<void> {

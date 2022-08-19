@@ -1,11 +1,10 @@
 import { TwitchChat, Channel } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import * as twitch from "./apis/twitch.ts";
-import { CommandContext, CommandModule, ircmsg_is_command_fmt, Command } from "./commands/Command.ts";
+import { CommandContext, ircmsg_is_command_fmt, Command } from "./commands/Command.ts";
+import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 // import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
 // import { sleep } from "https://deno.land/x/sleep/mod.ts";
 // import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
-import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
-
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -185,6 +184,10 @@ export class Config {
 		for await (const ircmsg of c) {
 			switch (ircmsg.command) {
 				case "PRIVMSG":
+					if (ircmsg.username === "pepega00000" && ircmsg.message === "ApuApustaja test") {
+						this.save_stats_to_file(this.channels.filter(c => c.nickname === "gkey")[0]);
+					}
+
 					if (ircmsg_is_command_fmt(ircmsg, this.cmd_prefix) &&
 						!this.disregarded_users.includes(ircmsg.username)
 					) {

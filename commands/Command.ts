@@ -1,5 +1,12 @@
-import { IrcMessage } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
+import { IrcMessage, Tags } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import { Config, TwitchChannel, TwitchInfo } from "../lib.ts";
+
+interface ActualTags extends Tags {
+	// for some reason this property is missing in the interface of the API
+	// but the actual constructed interface has it...
+	badges: string,
+}
+
 
 import Ping from "./ping.ts";
 import New7Tv from "./7tv.ts";
@@ -12,17 +19,6 @@ export enum UserPrivilege {
 	VIP = 1,        // VIPs
 	Moderator = 2,  // moderators
 	Broadcaster = 3, // the streamer himself
-}
-
-export function user_priv_from_ircmsg_badges_tag(badges_str: string): UserPrivilege {
-	if (badges_str.includes("broadcaster"))
-		return UserPrivilege.VIP;
-	if (badges_str.includes("vip"))
-		return UserPrivilege.VIP;
-	if (badges_str.includes("moderator"))
-		return UserPrivilege.VIP;
-
-	return UserPrivilege.None;
 }
 
 export enum Command {
@@ -140,6 +136,17 @@ export class CommandContext {
 		return map;
 	}
 
+	get_highest_privilege(ircmsg_badges_tag: string): UserPrivilege {
+		if (ircmsg_badges_tag.includes("broadcaster"))
+			return UserPrivilege.Broadcaster;
+		if (ircmsg_badges_tag.includes("vip"))
+			return UserPrivilege.VIP;
+		if (ircmsg_badges_tag.includes("moderator"))
+			return UserPrivilege.Moderator;
+
+		return UserPrivilege.None;
+	}
+
 	constructor(ircmsg: IrcMessage, cfg: Config) {
 		let msg_split = ircmsg.message.split(" ");
 		// allow prefixes with 1 space in them
@@ -148,7 +155,7 @@ export class CommandContext {
 		this.cmd = Command.from_str(msg_split[0].slice(cfg.cmd_prefix.length));
 		this.args = msg_split.slice(1);
 
-		this.highest_priv = user_priv_from_ircmsg_badges_tag(ircmsg.tags.flags);
+		this.highest_priv = this.get_highest_privilege((ircmsg.tags as ActualTags).badges);
 		this.channel = cfg.channels.filter(c => c.nickname === ircmsg.channel.slice(1))[0];
 		this.twitch_info = cfg.twitch_info;
 		this.startup_time = cfg.startup_time!;

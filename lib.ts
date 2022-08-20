@@ -31,20 +31,31 @@ export interface TwitchInfo {
 	client_secret: string,
 }
 
+interface IConfigConstructor {
+	cmd_prefix?: string,
+}
+
 export class Config {
 	client: TwitchChat;
-	channels: TwitchChannel[];
 	twitch_info: TwitchInfo;
+	loopback_address: string | null;
+	// twitch user IDs of people with the `UserPrivilege.Sudo` status
+	sudoers: number[];
+	channels: TwitchChannel[];
 	cmd_prefix: string;
 	disregarded_users: string[];
-	loopback_address: string | null;
 	startup_time: Date | null;
 
-	constructor(twitch_login: string, twitch_oauth: string, twitch_client_id: string, twitch_client_secret: string, cmd_prefix: string) {
-		this.cmd_prefix = cmd_prefix;
+	constructor(cfg: IConfigConstructor) {
+		const twitch_oauth = Deno.env.get("TWITCH_OAUTH")!;
+		const twitch_login = Deno.env.get("TWITCH_LOGIN")!;
+		const twitch_client_id = Deno.env.get("TWITCH_CLIENT_ID")!;
+		const twitch_client_secret = Deno.env.get("TWITCH_CLIENT_SECRET")!;
+		this.cmd_prefix = cfg.cmd_prefix ?? "!";
 		this.client = new TwitchChat(twitch_oauth, twitch_login);
 		this.channels = [];
 		this.disregarded_users = [];
+		this.sudoers = []
 		this.loopback_address = null;
 		this.twitch_info = {
 			login: twitch_login,
@@ -55,6 +66,10 @@ export class Config {
 		this.startup_time = null;
 	}
 
+	add_sudoers(sudoers: number[]) {
+		// TODO: bench against `this.sudoers = [...this.sudoers, ...sudoers]` ... ?
+		for (const sudoer_id of sudoers) this.sudoers.push(sudoer_id);
+	}
 	// async get_loopback_address(): Promise<string> {
 	// 	if (Deno.env.get("IS_LOCAL_DEVELOPMENT")) {
 	// 		let loopback: string | null = null;
@@ -321,6 +336,16 @@ declare global {
 		random_el(): T;
 		shuffle(): void;
 	}
+
+	interface Math {
+		clamp(n: number, min: number, max: number): number,
+	}
+}
+
+Math.clamp = function (n: number, min: number, max: number): number {
+	if (n < min) return min;
+	if (n > max) return max;
+	return n;
 }
 
 Array.prototype.random_el = function () {

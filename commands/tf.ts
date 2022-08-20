@@ -1,8 +1,9 @@
 import { CommandContext, CommandModule, CommandResult } from "./Command.ts";
 import * as twitch from "../apis/twitch.ts";
 
-// deno-lint-ignore no-inferrable-types
-const DEFAULT_COUNT: number = 10;
+const DEFAULT_COUNT = 10;
+const MIN_COUNT = 50;
+const MAX_COUNT = 50;
 
 const Tf: CommandModule = {
 	sufficient_privilege: 1,
@@ -15,11 +16,11 @@ const Tf: CommandModule = {
 			}
 
 		const kwargs = ctx.kwargs();
-		// TODO: check for negativity
 		let count: number | null = null;
 		const _count = kwargs.get("count");
 		if (_count) {
-			try { count = parseInt(_count) } catch { count = DEFAULT_COUNT }
+			try { count = Math.clamp(parseInt(_count), MIN_COUNT, MAX_COUNT) }
+			catch { count = DEFAULT_COUNT }
 		} else {
 			count = DEFAULT_COUNT;
 		}
@@ -34,7 +35,7 @@ const Tf: CommandModule = {
 
 		return {
 			is_success: true,
-			output: `${chosen.join(" ")} :tf:`,
+			output: `@${chosen.join(" @")} :tf:`,
 		}
 	},
 

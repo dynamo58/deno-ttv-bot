@@ -1,5 +1,5 @@
 import { IrcMessage, Tags } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
-import { Config, TwitchChannel, TwitchInfo } from "../lib.ts";
+import { Config, TwitchChannel, TwitchInfo, TwitchUserBasicInfo } from "../lib.ts";
 
 interface ActualTags extends Tags {
 	// for some reason this property is missing in the interface of the API
@@ -12,12 +12,13 @@ import Ping from "./ping.ts";
 import New7Tv from "./7tv.ts";
 import Stats from "./stats.ts";
 import Commands from "./commands.ts";
-import Tf from "./tf.ts"
+import Tf from "./tf.ts";
+import Sudo from "./sudo.ts";
 
 export enum UserPrivilege {
-	None = 0,       // basic users
-	VIP = 1,        // VIPs
-	Moderator = 2,  // moderators
+	None = 0,        // basic users
+	VIP = 1,         // VIPs
+	Moderator = 2,   // moderators
 	Broadcaster = 3, // the streamer himself
 }
 
@@ -38,6 +39,11 @@ export enum Command {
 	New7tv = "new7tv",
 	Stats = "stats",
 	Tf = "tf",
+
+	// -------------------------------------------------------------------------
+	// admin-level commands
+	// -------------------------------------------------------------------------
+	Sudo = "sudo"
 }
 
 // deno-lint-ignore no-namespace
@@ -58,13 +64,15 @@ export namespace Command {
 				return Command.Stats;
 			case "tf":
 				return Command.Tf;
+			case "sudo":
+				return Command.Sudo;
 		}
 
 		return Command.None;
 	}
 
 	export function get_all_commands(): string[] {
-		return ["describe", "usage", "ping", "commands", "new7tv", "stats", "tf"];
+		return ["describe", "usage", "ping", "commands", "new7tv", "stats", "tf", "sudo"];
 	}
 
 	export function get_module(c: Command) {
@@ -79,6 +87,8 @@ export namespace Command {
 				return Commands;
 			case Command.Tf:
 				return Tf;
+			case Command.Sudo:
+				return Sudo
 		}
 	}
 }
@@ -95,6 +105,8 @@ export class CommandContext {
 	channel: TwitchChannel;
 	twitch_info: TwitchInfo;
 	startup_time: Date;
+	caller: TwitchUserBasicInfo;
+	sudoers: number[];
 
 	// get a map of keyword arguments
 	// allowed delimiters: (none), '', "",
@@ -159,6 +171,8 @@ export class CommandContext {
 		this.channel = cfg.channels.filter(c => c.nickname === ircmsg.channel.slice(1))[0];
 		this.twitch_info = cfg.twitch_info;
 		this.startup_time = cfg.startup_time!;
+		this.caller = { nickname: ircmsg.username, id: parseInt(ircmsg.tags["user-id"]) };
+		this.sudoers = cfg.sudoers;
 	}
 }
 

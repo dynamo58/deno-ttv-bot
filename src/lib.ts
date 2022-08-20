@@ -1,7 +1,8 @@
-import { TwitchChat, Channel } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
+import { TwitchChat, Channel, IrcMessage } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import * as twitch from "./apis/twitch.ts";
 import { CommandContext, ircmsg_is_command_fmt, Command } from "./commands/Command.ts";
 import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
+import Hook, { validate_hook } from "./Hook.ts";
 // import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
 // import { sleep } from "https://deno.land/x/sleep/mod.ts";
 // import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
@@ -22,6 +23,7 @@ export interface TwitchChannel extends TwitchUserBasicInfo {
 		// map between the user twitch ids and their message counts
 		user_counts: Map<number, number>
 	} | null,
+	hooks: Hook[],
 }
 
 export interface TwitchInfo {
@@ -47,29 +49,34 @@ export class Config {
 	startup_time: Date | null;
 
 	constructor(cfg: IConfigConstructor) {
-		const twitch_oauth = Deno.env.get("TWITCH_OAUTH")!;
-		const twitch_login = Deno.env.get("TWITCH_LOGIN")!;
-		const twitch_client_id = Deno.env.get("TWITCH_CLIENT_ID")!;
-		const twitch_client_secret = Deno.env.get("TWITCH_CLIENT_SECRET")!;
-		this.cmd_prefix = cfg.cmd_prefix ?? "!";
-		this.client = new TwitchChat(twitch_oauth, twitch_login);
-		this.channels = [];
-		this.disregarded_users = [];
-		this.sudoers = []
-		this.loopback_address = null;
-		this.twitch_info = {
-			login: twitch_login,
-			oauth: twitch_oauth,
-			client_id: twitch_client_id,
-			client_secret: twitch_client_secret,
-		};
-		this.startup_time = null;
+		try {
+			const twitch_oauth = Deno.env.get("TWITCH_OAUTH")!;
+			const twitch_login = Deno.env.get("TWITCH_LOGIN")!;
+			const twitch_client_id = Deno.env.get("TWITCH_CLIENT_ID")!;
+			const twitch_client_secret = Deno.env.get("TWITCH_CLIENT_SECRET")!;
+
+			this.cmd_prefix = cfg.cmd_prefix ?? "!";
+			this.client = new TwitchChat(twitch_oauth, twitch_login);
+			this.channels = [];
+			this.disregarded_users = [];
+			this.sudoers = []
+			this.loopback_address = null;
+			this.twitch_info = {
+				login: twitch_login,
+				oauth: twitch_oauth,
+				client_id: twitch_client_id,
+				client_secret: twitch_client_secret,
+			};
+			this.startup_time = null;
+		} catch {
+			throw new Error("Credentials not in environment!");
+		}
 	}
 
 	add_sudoers(sudoers: number[]) {
-		// TODO: bench against `this.sudoers = [...this.sudoers, ...sudoers]` ... ?
 		for (const sudoer_id of sudoers) this.sudoers.push(sudoer_id);
 	}
+
 	// async get_loopback_address(): Promise<string> {
 	// 	if (Deno.env.get("IS_LOCAL_DEVELOPMENT")) {
 	// 		let loopback: string | null = null;
@@ -100,7 +107,7 @@ export class Config {
 		// if channel is not live
 		if (channel.data.length === 0) {
 			const channel_id = await twitch.id_from_nick(this.twitch_info, channel_name);
-			this.channels.push({ nickname: channel_name, id: channel_id, uptime_stats: null });
+			this.channels.push({ nickname: channel_name, id: channel_id, uptime_stats: null, hooks: [] });
 			return;
 		}
 
@@ -113,8 +120,28 @@ export class Config {
 				games_played: [channel.data[0].game_name],
 				startup_time: new Date(channel.data[0].started_at),
 				user_counts: new Map<number, number>()
-			}
+			},
+			hooks: []
 		})
+	}
+
+	add_hook(channel_name: string, hook: Hook) {
+		let channel_idx: undefined | number;
+
+
+		for (const [idx, c] of this.channels.entries())
+			if (c.nickname === channel_name) {
+				channel_idx = idx;
+				break;
+			}
+
+		if (!channel_idx) throw new Error(`Channel ${channel_name} not joined by the bot!`)
+
+		this.channels[channel_idx].hooks.push({
+			...hook,
+			substring_criterion: hook.substring_criterion?.toLowerCase(),
+			nickname_criterion: hook.nickname_criterion?.toLowerCase(),
+		});
 	}
 
 	async save_stats_to_file(channel: TwitchChannel) {
@@ -195,13 +222,28 @@ export class Config {
 		app.listen({ port: parseInt(Deno.env.get("PORT")!) });
 	}
 
+	handle_hooks(c: Channel, channel_idx: number, ircmsg: IrcMessage) {
+		const hooks = this.channels[channel_idx].hooks;
+
+		for (const hook of hooks) {
+			if (validate_hook(hook, ircmsg)) {
+				const cb = hook.callback();
+				if (cb) c.send(cb);
+			}
+		}
+	}
+
+
 	async listen_channel(c: Channel, channel_idx: number) {
 		for await (const ircmsg of c) {
 			switch (ircmsg.command) {
 				case "PRIVMSG":
+
+					this.handle_hooks(c, channel_idx, ircmsg);
 					if (ircmsg.username === "pepega00000" && ircmsg.message === "ApuApustaja test") {
 						this.save_stats_to_file(this.channels.filter(c => c.nickname === "gkey")[0]);
 					}
+
 
 					if (ircmsg_is_command_fmt(ircmsg, this.cmd_prefix) &&
 						!this.disregarded_users.includes(ircmsg.username)

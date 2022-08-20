@@ -11,7 +11,11 @@ async function main(): Promise<void> {
 		"kattahbot", "anotherttvviewer", "streamlabs", "moobot"
 	]);
 	bot.add_sudoers([149355320]);
-	await bot.join_channels(["gkey", "pepega00000"]);
+	await bot.join_channels(["pepega00000", "gkey"]);
+	bot.add_hook("gkey", {
+		substring_criterion: "gQueen",
+		callback: () => { return "BOOBA" }
+	});
 	await bot.run();
 }
 

@@ -1,5 +1,6 @@
 import { IrcMessage, Tags } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
-import { Config, TwitchChannel, TwitchInfo, TwitchUserBasicInfo } from "../lib.ts";
+import { TwitchChannel, TwitchInfo, TwitchUserBasicInfo } from "../bot.ts";
+import Config from "../config.ts";
 
 interface ActualTags extends Tags {
 	// for some reason this property is missing in the interface of the API

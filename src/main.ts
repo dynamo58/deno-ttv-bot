@@ -1,18 +1,19 @@
-import "https://deno.land/x/dotenv@v3.2.0/load.ts";
-import { Config } from "./lib.ts";
+import Bot from "./bot.ts";
+import Config from "./config.ts";
 
 async function main(): Promise<void> {
-	const bot = new Config({
-		cmd_prefix: "GIGACHAD\ ",
+	const config = new Config({
+		cmd_prefix: "#",
 	});
-	bot.disregard_users([
+	const bot = new Bot(config);
+	bot.cfg.disregard_users([
 		"lovcen", "fossabot", "fightbot", "snusbot",
 		"streamelements", "schnozebot", "thepositiveBot",
 		"kattahbot", "anotherttvviewer", "streamlabs", "moobot"
 	]);
-	bot.add_sudoers([149355320]);
-	await bot.join_channels(["pepega00000", "gkey"]);
-	bot.add_hook("gkey", {
+	bot.cfg.add_sudoers([149355320]);
+	await bot.cfg.join_channels(["pepega00000", "gkey"]);
+	bot.cfg.add_hook("gkey", {
 		substring_criterion: "gQueen",
 		callback: () => { return "BOOBA" }
 	});

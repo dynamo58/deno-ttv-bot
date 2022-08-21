@@ -1,4 +1,4 @@
-import { CommandContext, CommandModule, CommandResult } from "./Command.ts";
+import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 
 const Sudo: CommandModule = {
 	sufficient_privilege: 0,

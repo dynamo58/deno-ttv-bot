@@ -2,7 +2,7 @@ import { Channel, IrcMessage } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 
 import * as twitch from "./apis/twitch.ts";
-import { CommandContext, ircmsg_is_command_fmt, Command } from "./commands/Command.ts";
+import { CommandContext, ircmsg_is_command_fmt, Command } from "./Command.ts";
 import Hook, { validate_hook } from "./Hook.ts";
 import Config from "./config.ts";
 

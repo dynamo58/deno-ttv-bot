@@ -1,5 +1,6 @@
-import { TwitchInfo } from "../lib.ts";
-import { HelixChannel, HelixUsers, TmiChatters } from "./twitch.d.ts";
+import { TwitchAPI } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
+import { TwitchInfo } from "../bot.ts";
+import { CreateClip, HelixChannel, HelixUsers, TmiChatters } from "./twitch.d.ts";
 
 export async function id_from_nick(t: TwitchInfo, nick: string): Promise<number> {
 	const r = await fetch(`https://api.twitch.tv/helix/users?login=${nick}`, {
@@ -72,4 +73,16 @@ export async function get_chatters(channel_name: string): Promise<TmiChatters> {
 	const r = await fetch(`https://tmi.twitch.tv/group/user/${channel_name}/chatters`);
 
 	return ((await r.json()) as TmiChatters);
+}
+
+export async function create_clip(t: TwitchInfo, channel_id: number): Promise<CreateClip> {
+	const r = await fetch(`https://api.twitch.tv/helix/clips?broadcaster_id=${channel_id}`, {
+		method: "POST",
+		headers: {
+			'Client-ID': t.client_id,
+			'Authorization': 'Bearer ' + t.oauth,
+		}
+	})
+
+	return ((await r.json()) as CreateClip);
 }

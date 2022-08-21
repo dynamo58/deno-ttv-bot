@@ -1,4 +1,4 @@
-import { CommandContext, CommandModule, CommandResult } from "./Command.ts";
+import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import { get_7tv_emotes } from "../apis/adamcy.ts";
 
 

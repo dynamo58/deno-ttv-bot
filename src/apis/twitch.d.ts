@@ -61,3 +61,11 @@ export interface Chatters {
 	viewers: string[]
 }
 
+export interface CreateClip {
+	data: CreateClipData[]
+}
+
+export interface CreateClipData {
+	id: string
+	edit_url: string
+}

@@ -14,9 +14,15 @@ async function main(): Promise<void> {
 	bot.cfg.add_sudoers([149355320]);
 	await bot.cfg.join_channels(["pepega00000", "gkey"]);
 	bot.cfg.add_hook("gkey", {
-		substring_criterion: "gQueen",
-		callback: () => { return "BOOBA" }
+		nickname_criterion: "pepega00000",
+		substring_criterion: "test",
+		callback: () => { return "APU TeaTime" }
 	});
+	// bot.cfg.add_hook("gkey", {
+	// 	nickname_criterion: "fossabot",
+	// 	substring_criterion: "just subscribed",
+	// 	callback: () => { return "welcome to the g spot gQueen" }
+	// });
 	await bot.run();
 }
 

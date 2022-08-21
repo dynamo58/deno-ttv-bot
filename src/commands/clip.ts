@@ -1,28 +1,28 @@
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
+import * as twitch from "../apis/twitch.ts";
 
-
-const Ping: CommandModule = {
+const CreateClip: CommandModule = {
 	// for some reason I was getting some obscure errors while trying to mark this
 	// as UserPrivilege.{...}, so it has to look this obfuscated :(
 	sufficient_privilege: 0,
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
-		const uptime_mls = (new Date()).valueOf() - ctx.startup_time.valueOf();
-		const hrs = uptime_mls / (1_000 * 60 * 60);
+		const r = await twitch.create_clip(ctx.twitch_info, ctx.channel.id);
 
-		return await {
+		console.log(r);
+		return {
 			is_success: true,
-			output: `Pong! Running for ${hrs.toFixed(2)} hrs.`,
+			output: `https://clips.twitch.tv/${r.data[0].id}`,
 		}
 	},
 
 	description(): string {
-		return "Get a \"pong!\" response with the bot's uptime."
+		return "Create a clip"
 	},
 
 	usage(cmd_prefix: string): string {
-		return `${cmd_prefix}ping`;
+		return `${cmd_prefix}clip`;
 	}
 }
 
-export default Ping;
+export default CreateClip;

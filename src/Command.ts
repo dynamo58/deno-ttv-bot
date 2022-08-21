@@ -1,20 +1,19 @@
 import { IrcMessage, Tags } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
-import { TwitchChannel, TwitchInfo, TwitchUserBasicInfo } from "../bot.ts";
-import Config from "../config.ts";
-
 interface ActualTags extends Tags {
 	// for some reason this property is missing in the interface of the API
 	// but the actual constructed interface has it...
 	badges: string,
 }
+import { TwitchChannel, TwitchInfo, TwitchUserBasicInfo } from "./bot.ts";
+import Config from "./config.ts";
 
-
-import Ping from "./ping.ts";
-import New7Tv from "./7tv.ts";
-import Stats from "./stats.ts";
-import Commands from "./commands.ts";
-import Tf from "./tf.ts";
-import Sudo from "./sudo.ts";
+import Ping from "./commands/ping.ts";
+import New7Tv from "./commands/7tv.ts";
+import Stats from "./commands/stats.ts";
+import Commands from "./commands/commands.ts";
+import Tf from "./commands/tf.ts";
+import Sudo from "./commands/sudo.ts";
+import CreateClip from "./commands/clip.ts";
 
 export enum UserPrivilege {
 	None = 0,        // basic users
@@ -40,6 +39,7 @@ export enum Command {
 	New7tv = "new7tv",
 	Stats = "stats",
 	Tf = "tf",
+	Clip = "clip",
 
 	// -------------------------------------------------------------------------
 	// admin-level commands
@@ -67,13 +67,15 @@ export namespace Command {
 				return Command.Tf;
 			case "sudo":
 				return Command.Sudo;
+			case "clip":
+				return Command.Clip;
 		}
 
 		return Command.None;
 	}
 
 	export function get_all_commands(): string[] {
-		return ["describe", "usage", "ping", "commands", "new7tv", "stats", "tf", "sudo"];
+		return ["describe", "usage", "ping", "commands", "new7tv", "stats", "tf", "sudo", "clip"];
 	}
 
 	export function get_module(c: Command) {
@@ -89,7 +91,9 @@ export namespace Command {
 			case Command.Tf:
 				return Tf;
 			case Command.Sudo:
-				return Sudo
+				return Sudo;
+			case Command.Clip:
+				return CreateClip;
 		}
 	}
 }

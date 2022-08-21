@@ -1,4 +1,4 @@
-import { Command, CommandContext, CommandResult, CommandModule } from "./Command.ts";
+import { Command, CommandContext, CommandResult, CommandModule } from "../Command.ts";
 
 const Commands: CommandModule = {
 	sufficient_privilege: 0,

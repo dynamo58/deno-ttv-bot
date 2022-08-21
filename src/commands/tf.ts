@@ -40,7 +40,7 @@ const Tf: CommandModule = {
 	},
 
 	description(): string {
-		return "Troll a bunch of chatters by pinging them."
+		return "Troll a bunch of chatters by pinging them. :tf:"
 	},
 
 	usage(cmd_prefix: string): string {

@@ -13,7 +13,8 @@ import Stats from "./commands/stats.ts";
 import Commands from "./commands/commands.ts";
 import Tf from "./commands/tf.ts";
 import Sudo from "./commands/sudo.ts";
-import CreateClip from "./commands/clip.ts";
+import Clip from "./commands/clip.ts";
+import Weather from "./commands/weather.ts";
 
 export enum UserPrivilege {
 	None = 0,        // basic users
@@ -40,6 +41,7 @@ export enum Command {
 	Stats = "stats",
 	Tf = "tf",
 	Clip = "clip",
+	Weather = "weather",
 
 	// -------------------------------------------------------------------------
 	// admin-level commands
@@ -69,13 +71,15 @@ export namespace Command {
 				return Command.Sudo;
 			case "clip":
 				return Command.Clip;
+			case "weather":
+				return Command.Weather;
 		}
 
 		return Command.None;
 	}
 
 	export function get_all_commands(): string[] {
-		return ["describe", "usage", "ping", "commands", "new7tv", "stats", "tf", "sudo", "clip"];
+		return ["describe", "usage", "ping", "commands", "new7tv", "stats", "tf", "sudo", "clip", "weather"];
 	}
 
 	export function get_module(c: Command) {
@@ -93,7 +97,9 @@ export namespace Command {
 			case Command.Sudo:
 				return Sudo;
 			case Command.Clip:
-				return CreateClip;
+				return Clip;
+			case Command.Weather:
+				return Weather;
 		}
 	}
 }

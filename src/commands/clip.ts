@@ -1,9 +1,7 @@
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import * as twitch from "../apis/twitch.ts";
 
-const CreateClip: CommandModule = {
-	// for some reason I was getting some obscure errors while trying to mark this
-	// as UserPrivilege.{...}, so it has to look this obfuscated :(
+const Clip: CommandModule = {
 	sufficient_privilege: 0,
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
@@ -25,4 +23,4 @@ const CreateClip: CommandModule = {
 	}
 }
 
-export default CreateClip;
+export default Clip;

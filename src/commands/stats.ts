@@ -1,4 +1,4 @@
-import { CommandContext, CommandModule, CommandResult } from "./Command.ts";
+import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import * as twitch from "../apis/twitch.ts";
 import { TwitchInfo } from "../bot.ts";
 

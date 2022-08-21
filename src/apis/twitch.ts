@@ -1,4 +1,3 @@
-import { TwitchAPI } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import { TwitchInfo } from "../bot.ts";
 import { CreateClip, HelixChannel, HelixUsers, TmiChatters } from "./twitch.d.ts";
 

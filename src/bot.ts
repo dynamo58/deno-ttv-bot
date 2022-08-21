@@ -9,9 +9,9 @@ import Config from "./config.ts";
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import "./std_redeclarations.ts";
 
-// import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
-// import { sleep } from "https://deno.land/x/sleep/mod.ts";
-// import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
+import { sleep } from "https://deno.land/x/sleep@v1.2.1/mod.ts";
+import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -86,22 +86,21 @@ export default class Bot {
 			ctx.response.body = "Hello :)";
 		});
 
-		// router.post("/notification", async (ctx) => {
-		// 	console.log(ctx.request.body);
+		router.post("/notification", async (ctx) => {
+			console.log(ctx.request.body);
 
-		// 	const body = ctx.request.body();
+			const body = ctx.request.body();
 
-		// 	if (body.type === "json") {
+			if (body.type === "json") {
+				console.log(await body.value);
+				console.log("Sucessfully established EventSub webhooks");
+			}
 
-		// 		console.log(await body.value);
-		// 		console.log("Sucessfully established EventSub webhooks");
-		// 	}
 
-
-		// 	// if (ctx.request.body.event) {
-		// 	// console.log(req)
-		// 	// }
-		// });
+			// if (ctx.request.body.event) {
+			// console.log(req)
+			// }
+		});
 
 		const app = new Application();
 		app.use(router.routes());
@@ -168,8 +167,6 @@ export default class Bot {
 
 					const cmd = Command.get_module(ctx.cmd);
 					const res = await cmd!.execute(ctx);
-					// const cmd = (await import(ctx.cmd.toString())).default as CommandModule;
-					// const res = await cmd.execute(ctx);
 					if (res.is_success)
 						c.send(res.output || "cmd succeded");
 					else
@@ -206,68 +203,67 @@ export default class Bot {
 	// pubsub & eventsub
 	// -------------------------------------------------------------------------
 
+	async get_loopback_address(): Promise<string> {
+		if (Deno.env.get("LOCAL")) {
+			let loopback: string | null = null;
 
-	// async get_loopback_address(): Promise<string> {
-	// 	if (Deno.env.get("IS_LOCAL_DEVELOPMENT")) {
-	// 		let loopback: string | null = null;
+			const ngrok = await Ngrok.create({
+				protocol: "http",
+				port: parseInt(Deno.env.get("PORT")!),
+			})
 
-	// 		const ngrok = await Ngrok.create({
-	// 			protocol: "http",
-	// 			port: parseInt(Deno.env.get("PORT")!),
-	// 		})
+			ngrok.addEventListener("ready", (event) => {
+				loopback = event.detail;
+			});
 
-	// 		ngrok.addEventListener("ready", (event) => {
-	// 			loopback = event.detail;
-	// 		});
+			while (loopback === null) {
+				await sleep(0.1);
+			}
 
-	// 		while (loopback === null) {
-	// 			await sleep(0.1);
-	// 		}
+			console.log(`Got ngrok tunnel address`);
+			return loopback!;
 
-	// 		console.log(`Got ngrok tunnel address`);
-	// 		return loopback!;
+		} else
+			return "DEPLOY_URL";
+	}
 
-	// 	} else {
-	// 		return "DEPLOY_URL";
-	// 	}
-	// }
+	async init_pubsub() {
+		const auth = await twitch.get_eventsub_accesstoken(this.cfg.twitch_info);
+		const ws: WebSocketClient = new StandardWebSocketClient("wss://pubsub-edge.twitch.tv");
 
-	// async init_pubsub() {
-	// 	try {
-	// 		const ws: WebSocketClient = new StandardWebSocketClient("wss://pubsub-edge.twitch.tv");
-	// 		const auth = await twitch.get_eventsub_accesstoken(this.twitch_info);
-	// 		ws.on("open", () => {
-	// 			console.log(`Opened WebSocket connection with Twitch PubSub`);
+		ws.on("open", () => {
+			console.log(`Opened WebSocket connection with Twitch PubSub`);
 
-	// 			setInterval(() => {
-	// 				ws.send(JSON.stringify({ type: "PING" }));
-	// 			}, 4 * 60 * 1000);
+			ws.send(JSON.stringify({ type: "PING" }));
+			setInterval(() => {
+				ws.send(JSON.stringify({ type: "PING" }));
+			}, 4 * 60 * 1000);
 
-	// 			ws.send(JSON.stringify({
-	// 				"type": "LISTEN",
-	// 				"nonce": Deno.env.get("SECRET")!,
-	// 				"data": {
-	// 					"topics": [`channel-subscribe-events-v1.40295380`],
-	// 					"auth_token": auth,
-	// 				}
-	// 			}))
-	// 		});
+			const listen_message = {
+				"type": "LISTEN",
+				"nonce": Deno.env.get("SECRET")!,
+				"data": {
+					"topics": [`channel-subscribe-events-v1.40295380`],
+					"auth_token": auth,
+				}
+			}
+			// console.log(listen_message)
 
-	// 		ws.on("message", (msg) => {
-	// 			if (!(JSON.parse(msg.data).type === "PONG")) {
-	// 				console.log("xd", JSON.parse(msg.data))
-	// 			}
-	// 		})
-	// 	} catch (e) {
-	// 		console.log(e)
-	// 	}
-	// }
+			ws.send(JSON.stringify(listen_message));
+		});
+
+		ws.on("message", (msg) => {
+			console.log({ msg });
+			if (!(JSON.parse(msg.data).type === "PONG")) {
+				console.log("xd", JSON.parse(msg.data))
+			}
+		})
+	}
 
 	async run() {
 		this.cfg.startup_time = new Date();
 		await this.cfg.client.connect();
 		this.listen_local();
-		// this.loopback_address = await this.get_loopback_address();
 
 		this.cfg.channels.map((c, idx) => {
 			const channel_client = this.cfg.client.joinChannel(c.nickname);
@@ -283,7 +279,8 @@ export default class Bot {
 			}
 		});
 
-		// await this.init_pubsub();
+		// this.cfg.loopback_address = await this.get_loopback_address();
+		// this.init_pubsub();
 		// await twitch.request_eventsub_subscription(this.twitch_info, this.loopback_address!, 40295380);
 	}
 }

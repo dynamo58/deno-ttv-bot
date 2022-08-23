@@ -5,6 +5,7 @@ import * as twitch from "./apis/twitch.ts";
 import { CommandContext, ircmsg_is_command_fmt, Command } from "./Command.ts";
 import Hook, { validate_hook } from "./Hook.ts";
 import Config from "./config.ts";
+import CronJob from "./cron.ts";
 
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import "./std_redeclarations.ts";
@@ -12,6 +13,7 @@ import "./std_redeclarations.ts";
 import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
 import { sleep } from "https://deno.land/x/sleep@v1.2.1/mod.ts";
 import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+import { getRandomFilename } from "https://deno.land/x/oak@v10.6.0/util.ts";
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -260,6 +262,32 @@ export default class Bot {
 		})
 	}
 
+	// -------------------------------------------------------------------------
+	// cron jobbing
+	// -------------------------------------------------------------------------
+
+	start_cronjobs() {
+		this.cfg.cron_jobs.forEach((c) => {
+			const client_refs: Channel[] = [];
+			for (const [key, val] of this.cfg.client.channels)
+				if (!c.channel_names || c.channel_names.includes(key.slice(1)))
+					client_refs.push(val);
+			const period_diff = c.period[1] - c.period[0];
+			(async function foo() {
+				while (true) {
+					await sleep(c.period[0] + Math.floor(Math.random() * period_diff));
+					const out = c.execute();
+					if (out)
+						client_refs.forEach((ch) => { ch.send(out), console.log(`Ran cronjob ${c.execute} in ${ch.channelName}`) });
+				}
+			})()
+		});
+	}
+
+	// -------------------------------------------------------------------------
+	// main
+	// -------------------------------------------------------------------------
+
 	async run() {
 		this.cfg.startup_time = new Date();
 		await this.cfg.client.connect();
@@ -279,6 +307,7 @@ export default class Bot {
 			}
 		});
 
+		this.start_cronjobs();
 		// this.cfg.loopback_address = await this.get_loopback_address();
 		// this.init_pubsub();
 		// await twitch.request_eventsub_subscription(this.twitch_info, this.loopback_address!, 40295380);

@@ -1,26 +1,26 @@
 import { TwitchInfo } from "../bot.ts";
 import { CreateClip, HelixChannel, HelixUsers, TmiChatters } from "./twitch.d.ts";
 
-export async function id_from_nick(t: TwitchInfo, nick: string): Promise<number> {
-	const r = await fetch(`https://api.twitch.tv/helix/users?login=${nick}`, {
+export async function id_from_nick(t: TwitchInfo, nicks: string[]): Promise<number[]> {
+	const r = await fetch(`https://api.twitch.tv/helix/users?login=${nicks.join("&login=")}`, {
 		headers: {
 			"Client-ID": t.client_id,
 			"Authorization": `Bearer ${t.oauth}`
 		}
 	})
 
-	return parseInt(((await r.json()) as HelixUsers).data[0].id)!;
+	return ((await r.json()) as HelixUsers).data.map(d => parseInt(d.id)!);
 }
 
-export async function nick_from_id(t: TwitchInfo, id: number): Promise<string> {
-	const r = await fetch(`https://api.twitch.tv/helix/users?id=${id}`, {
+export async function nick_from_id(t: TwitchInfo, ids: number[]): Promise<string[]> {
+	const r = await fetch(`https://api.twitch.tv/helix/users?id=${ids.join("&id=")}`, {
 		headers: {
 			"Client-ID": t.client_id,
 			"Authorization": `Bearer ${t.oauth}`
 		}
 	})
 
-	return ((await r.json()) as HelixUsers).data[0].login;
+	return ((await r.json()) as HelixUsers).data.map(d => d.login);
 }
 
 export async function get_channel(t: TwitchInfo, nick: string): Promise<HelixChannel> {

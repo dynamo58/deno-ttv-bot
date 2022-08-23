@@ -4,6 +4,7 @@ import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import * as twitch from "./apis/twitch.ts";
 import Hook from "./Hook.ts";
 import { TwitchInfo, TwitchChannel } from "./bot.ts";
+import CronJob from "./cron.ts";
 
 import "./std_redeclarations.ts";
 
@@ -21,6 +22,7 @@ export default class Config {
 	cmd_prefix: string;
 	disregarded_users: string[];
 	startup_time: Date | null;
+	cron_jobs: CronJob[];
 
 	constructor(cfg: IConfigConstructor) {
 		try {
@@ -42,6 +44,7 @@ export default class Config {
 				client_secret: twitch_client_secret,
 			};
 			this.startup_time = null;
+			this.cron_jobs = [];
 		} catch {
 			throw new Error("Credentials not in environment!");
 		}
@@ -50,6 +53,10 @@ export default class Config {
 	// -------------------------------------------------------------------------
 	// builder-pattern-like methods
 	// ------------------------------------------------------------------------
+
+	add_cronjob(c: CronJob) {
+		this.cron_jobs.push(c);
+	}
 
 	add_sudoers(sudoers: number[]) {
 		for (const sudoer_id of sudoers) this.sudoers.push(sudoer_id);
@@ -68,7 +75,7 @@ export default class Config {
 		const channel = await twitch.get_channel(this.twitch_info, channel_name);
 		// if channel is not live
 		if (channel.data.length === 0) {
-			const channel_id = await twitch.id_from_nick(this.twitch_info, channel_name);
+			const channel_id = (await twitch.id_from_nick(this.twitch_info, [channel_name]))[0];
 			this.channels.push({ nickname: channel_name, id: channel_id, uptime_stats: null, hooks: [] });
 			return;
 		}

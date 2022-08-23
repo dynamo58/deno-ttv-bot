@@ -4,8 +4,7 @@ import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 import * as twitch from "./apis/twitch.ts";
 import { CommandContext, ircmsg_is_command_fmt, Command } from "./Command.ts";
 import Hook, { validate_hook } from "./Hook.ts";
-import Config from "./config.ts";
-import CronJob from "./cron.ts";
+import Config from "./Config.ts";
 
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import "./std_redeclarations.ts";
@@ -13,7 +12,6 @@ import "./std_redeclarations.ts";
 import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
 import { sleep } from "https://deno.land/x/sleep@v1.2.1/mod.ts";
 import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
-import { getRandomFilename } from "https://deno.land/x/oak@v10.6.0/util.ts";
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -290,6 +288,7 @@ export default class Bot {
 
 	async run() {
 		this.cfg.startup_time = new Date();
+		await this.cfg.init_channels();
 		await this.cfg.client.connect();
 		this.listen_local();
 

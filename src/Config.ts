@@ -4,7 +4,7 @@ import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import * as twitch from "./apis/twitch.ts";
 import Hook from "./Hook.ts";
 import { TwitchInfo, TwitchChannel } from "./bot.ts";
-import CronJob from "./cron.ts";
+import CronJob from "./CronJob.ts";
 
 import "./std_redeclarations.ts";
 
@@ -51,52 +51,32 @@ export default class Config {
 	}
 
 	// -------------------------------------------------------------------------
-	// builder-pattern-like methods
+	// builder pattern methods
 	// ------------------------------------------------------------------------
 
-	add_cronjob(c: CronJob) {
+	add_cronjob(c: CronJob): Config {
 		this.cron_jobs.push(c);
+		return this;
 	}
 
-	add_sudoers(sudoers: number[]) {
+	add_sudoers(sudoers: number[]): Config {
 		for (const sudoer_id of sudoers) this.sudoers.push(sudoer_id);
+		return this;
 	}
 
-	disregard_users(users: string[]) {
+	disregard_users(users: string[]): Config {
 		this.disregarded_users = users;
+		return this;
 	}
 
-	async join_channels(channels: string[]) {
+	join_channels(channels: string[]): Config {
 		for (const c of channels)
-			await this.add_channel(c);
+			this.channels.push({ nickname: c, id: 0, uptime_stats: null, hooks: [] });
+		return this;
 	}
 
-	async add_channel(channel_name: string) {
-		const channel = await twitch.get_channel(this.twitch_info, channel_name);
-		// if channel is not live
-		if (channel.data.length === 0) {
-			const channel_id = (await twitch.id_from_nick(this.twitch_info, [channel_name]))[0];
-			this.channels.push({ nickname: channel_name, id: channel_id, uptime_stats: null, hooks: [] });
-			return;
-		}
-
-		// if channel is live
-		this.channels.push({
-			nickname: channel.data[0].user_login,
-			id: parseInt(channel.data[0].user_id),
-			uptime_stats: {
-				messages_sent: 0,
-				games_played: [channel.data[0].game_name],
-				startup_time: new Date(channel.data[0].started_at),
-				user_counts: new Map<number, number>()
-			},
-			hooks: []
-		})
-	}
-
-	add_hook(channel_name: string, hook: Hook) {
+	add_hook(channel_name: string, hook: Hook): Config {
 		let channel_idx: undefined | number;
-
 
 		for (const [idx, c] of this.channels.entries())
 			if (c.nickname === channel_name) {
@@ -111,6 +91,8 @@ export default class Config {
 			substring_criterion: hook.substring_criterion?.toLowerCase(),
 			nickname_criterion: hook.nickname_criterion?.toLowerCase(),
 		});
+
+		return this;
 	}
 
 	// -------------------------------------------------------------------------
@@ -127,5 +109,38 @@ export default class Config {
 		} catch {
 			console.log(`Failed saving stats for ${channel.nickname}.`);
 		}
+	}
+
+	async init_channels(): Promise<Config> {
+		for (const [idx, c] of this.channels.entries()) {
+			const channel = await twitch.get_channel(this.twitch_info, c.nickname);
+
+			// if channel is not live
+			if (channel.data.length === 0) {
+				try {
+					const channel_id = (await twitch.id_from_nick(this.twitch_info, [c.nickname]))[0];
+					this.channels[idx] = { ...c, id: channel_id, nickname: c.nickname.toLowerCase() };
+				} catch {
+					throw new Error(`Channel ${c.nickname} does not exist!`);
+				}
+
+				continue;
+			}
+
+			// if channel is live
+			this.channels[idx] = {
+				nickname: c.nickname.toLowerCase(),
+				id: parseInt(channel.data[0].user_id),
+				uptime_stats: {
+					messages_sent: 0,
+					games_played: [channel.data[0].game_name],
+					startup_time: new Date(channel.data[0].started_at),
+					user_counts: new Map<number, number>()
+				},
+				hooks: []
+			}
+		}
+
+		return this;
 	}
 }

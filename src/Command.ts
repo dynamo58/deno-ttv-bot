@@ -5,7 +5,7 @@ interface ActualTags extends Tags {
 	badges: string,
 }
 import { TwitchChannel, TwitchInfo, TwitchUserBasicInfo } from "./bot.ts";
-import Config from "./config.ts";
+import Config from "./Config.ts";
 
 import Ping from "./commands/ping.ts";
 import New7Tv from "./commands/7tv.ts";

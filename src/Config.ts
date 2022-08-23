@@ -59,8 +59,10 @@ export default class Config {
 		return this;
 	}
 
-	add_sudoers(sudoers: number[]): Config {
-		for (const sudoer_id of sudoers) this.sudoers.push(sudoer_id);
+	async add_sudoers(sudoers: string[]): Promise<Config> {
+		const sudoer_ids = await twitch.id_from_nick(this.twitch_info, sudoers);
+		if (sudoer_ids.length !== sudoers.length) throw new Error(`One or more sudoers aren't real Twitch users`);
+		this.sudoers = sudoer_ids;
 		return this;
 	}
 

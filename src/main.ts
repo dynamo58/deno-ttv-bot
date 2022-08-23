@@ -10,7 +10,6 @@ async function main(): Promise<void> {
 			"streamelements", "schnozebot", "thepositiveBot",
 			"kattahbot", "anotherttvviewer", "streamlabs", "moobot"
 		])
-		.add_sudoers([149355320])
 		.add_hook("gkey", {
 			nickname_criterion: "fossabot",
 			substring_criterion: "just resubscribed",
@@ -24,9 +23,11 @@ async function main(): Promise<void> {
 		.add_cronjob(new CronJob({
 			channel_names: ["gkey"],
 			period: [2 * 60, 15 * 60],
-			execute: () => `${["ApuApustaja TeaTime", "Jammies", "THIS", "THAT", "THESE", "THOSE"].random_el()}`
-		}));
-	const bot = new Bot(config);
+			execute: () => `${["ApuApustaja TeaTime", "Jammies", "THIS", "THAT", "THESE", "THOSE", "Chatting test", "BatChest", "Okayeg TeaTime", "lol", "VeryEzh"].random_el()}`
+		}))
+		// this one has to be last, lol
+		.add_sudoers(["pepega00000"]);
+	const bot = new Bot(await config);
 	await bot.run();
 }
 

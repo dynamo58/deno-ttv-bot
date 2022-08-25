@@ -12,6 +12,17 @@ export async function id_from_nick(t: TwitchInfo, nicks: string[]): Promise<numb
 	return ((await r.json()) as HelixUsers).data.map(d => parseInt(d.id)!);
 }
 
+export async function get_users(t: TwitchInfo, nicks: string[]) {
+	const r = await fetch(`https://api.twitch.tv/helix/users?login=${nicks.join("&login=")}`, {
+		headers: {
+			"Client-ID": t.client_id,
+			"Authorization": `Bearer ${t.oauth}`
+		}
+	})
+
+	return ((await r.json()) as HelixUsers).data;
+}
+
 export async function nick_from_id(t: TwitchInfo, ids: number[]): Promise<string[]> {
 	const r = await fetch(`https://api.twitch.tv/helix/users?id=${ids.join("&id=")}`, {
 		headers: {

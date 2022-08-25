@@ -19,9 +19,7 @@ async function main(): Promise<void> {
 		.add_cronjob(new CronJob({
 			channel_names: ["gkey"],
 			period: [2 * 60, 15 * 60],
-			execute: async () => {
-				return (await get_7tv_emotes("gkey")).random_el().code;
-			}
+			execute: async () => (await get_7tv_emotes("gkey")).random_el().code
 		}))
 		.add_sudoers(["pepega00000"]); // this one has to be last, lol
 	const bot = new Bot(await config);

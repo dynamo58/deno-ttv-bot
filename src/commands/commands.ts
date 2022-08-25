@@ -3,10 +3,11 @@ import { Command, CommandContext, CommandResult, CommandModule } from "../Comman
 const Commands: CommandModule = {
 	sufficient_privilege: 0,
 
+	// deno-lint-ignore require-await
 	async execute(_: CommandContext): Promise<CommandResult> {
 		const global_cmds = Command.get_all_commands().join(", ");
 
-		return await {
+		return {
 			is_success: true,
 			output: `Global commands: ${global_cmds}`,
 		}

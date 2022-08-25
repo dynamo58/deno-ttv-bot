@@ -15,6 +15,8 @@ import Tf from "./commands/tf.ts";
 import Sudo from "./commands/sudo.ts";
 import Clip from "./commands/clip.ts";
 import Weather from "./commands/weather.ts";
+import Accage from "./commands/accage.ts";
+import Uptime from "./commands/uptime.ts";
 
 export enum UserPrivilege {
 	None = 0,        // basic users
@@ -42,6 +44,8 @@ export enum Command {
 	Tf = "tf",
 	Clip = "clip",
 	Weather = "weather",
+	Accage = "accage",
+	Uptime = "uptime",
 
 	// -------------------------------------------------------------------------
 	// admin-level commands
@@ -53,26 +57,18 @@ export enum Command {
 export namespace Command {
 	export function from_str(s: string): Command {
 		switch (s.toLowerCase()) {
-			case "ping":
-				return Command.Ping;
-			case "describe":
-				return Command.Describe;
-			case "usage":
-				return Command.Usage;
-			case "commands":
-				return Command.Commands;
-			case "new7tv":
-				return Command.New7tv;
-			case "stats":
-				return Command.Stats;
-			case "tf":
-				return Command.Tf;
-			case "sudo":
-				return Command.Sudo;
-			case "clip":
-				return Command.Clip;
-			case "weather":
-				return Command.Weather;
+			case "ping": return Command.Ping;
+			case "describe": return Command.Describe;
+			case "usage": return Command.Usage;
+			case "commands": return Command.Commands;
+			case "new7tv": return Command.New7tv;
+			case "stats": return Command.Stats;
+			case "tf": return Command.Tf;
+			case "sudo": return Command.Sudo;
+			case "clip": return Command.Clip;
+			case "weather": return Command.Weather;
+			case "accage": return Command.Accage;
+			case "uptime": return Command.Uptime;
 		}
 
 		return Command.None;
@@ -84,22 +80,16 @@ export namespace Command {
 
 	export function get_module(c: Command) {
 		switch (c) {
-			case Command.Ping:
-				return Ping;
-			case Command.New7tv:
-				return New7Tv;
-			case Command.Stats:
-				return Stats;
-			case Command.Commands:
-				return Commands;
-			case Command.Tf:
-				return Tf;
-			case Command.Sudo:
-				return Sudo;
-			case Command.Clip:
-				return Clip;
-			case Command.Weather:
-				return Weather;
+			case Command.Ping: return Ping;
+			case Command.New7tv: return New7Tv;
+			case Command.Stats: return Stats;
+			case Command.Commands: return Commands;
+			case Command.Tf: return Tf;
+			case Command.Sudo: return Sudo;
+			case Command.Clip: return Clip;
+			case Command.Weather: return Weather;
+			case Command.Accage: return Accage;
+			case Command.Uptime: return Uptime;
 		}
 	}
 }

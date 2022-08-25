@@ -1,10 +1,11 @@
 import Bot from "./bot.ts";
 import Config from "./Config.ts";
 import CronJob from "./CronJob.ts";
+import { get_7tv_emotes } from "./apis/adamcy.ts";
 
 async function main(): Promise<void> {
 	const config = new Config({ cmd_prefix: "$", })
-		.join_channels(["pepega00000", "gkey"])
+		.join_channels(["gkey", "pepega00000"])
 		.disregard_users([
 			"lovcen", "fossabot", "fightbot", "snusbot",
 			"streamelements", "schnozebot", "thepositiveBot",
@@ -15,18 +16,14 @@ async function main(): Promise<void> {
 			substring_criterion: "just resubscribed",
 			callback: () => { return "welcome back to the g spot gQueen" }
 		})
-		.add_hook("gkey", {
-			nickname_criterion: "fossabot",
-			substring_criterion: "just subscribed",
-			callback: () => { return "welcome to the g spot gQueen" }
-		})
 		.add_cronjob(new CronJob({
 			channel_names: ["gkey"],
 			period: [2 * 60, 15 * 60],
-			execute: () => `${["ApuApustaja TeaTime", "Jammies", "THIS", "THAT", "THESE", "THOSE", "Chatting test", "BatChest", "Okayeg TeaTime", "lol", "VeryEzh"].random_el()}`
+			execute: async () => {
+				return (await get_7tv_emotes("gkey")).random_el().code;
+			}
 		}))
-		// this one has to be last, lol
-		.add_sudoers(["pepega00000"]);
+		.add_sudoers(["pepega00000"]); // this one has to be last, lol
 	const bot = new Bot(await config);
 	await bot.run();
 }

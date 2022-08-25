@@ -67,17 +67,20 @@ export default class Config {
 	}
 
 	disregard_users(users: string[]): Config {
+		users = users.map(u => u.toLowerCase());
 		this.disregarded_users = users;
 		return this;
 	}
 
 	join_channels(channels: string[]): Config {
+		channels = channels.map(c => c.toLowerCase());
 		for (const c of channels)
-			this.channels.push({ nickname: c, id: 0, uptime_stats: null, hooks: [] });
+			this.channels.push({ nickname: c, id: 0, uptime_stats: null, hooks: [], pyramid_tracker: { count: 0, is_ascending: true } });
 		return this;
 	}
 
 	add_hook(channel_name: string, hook: Hook): Config {
+		channel_name = channel_name.toLowerCase();
 		let channel_idx: undefined | number;
 
 		for (const [idx, c] of this.channels.entries())
@@ -85,8 +88,7 @@ export default class Config {
 				channel_idx = idx;
 				break;
 			}
-
-		if (!channel_idx) throw new Error(`Channel ${channel_name} not joined by the bot!`)
+		if (channel_idx === undefined) throw new Error(`Channel ${channel_name} not joined by the bot!`)
 
 		this.channels[channel_idx].hooks.push({
 			...hook,
@@ -104,45 +106,12 @@ export default class Config {
 	async save_stats_to_file(channel: TwitchChannel) {
 		try {
 			await Deno.writeTextFile(
-				`./cache/${(new Date()).toISOString()}.json`,
+				`./cache/${channel.nickname}__${(new Date()).toISOString()}.json`,
 				JSON.stringify(channel)
 			);
 			console.log(`Saved stats for ${channel.nickname}.`);
-		} catch {
-			console.log(`Failed saving stats for ${channel.nickname}.`);
+		} catch (e) {
+			console.log(`Failed saving stats for ${channel.nickname}.\n${e}`);
 		}
-	}
-
-	async init_channels(): Promise<Config> {
-		for (const [idx, c] of this.channels.entries()) {
-			const channel = await twitch.get_channel(this.twitch_info, c.nickname);
-
-			// if channel is not live
-			if (channel.data.length === 0) {
-				try {
-					const channel_id = (await twitch.id_from_nick(this.twitch_info, [c.nickname]))[0];
-					this.channels[idx] = { ...c, id: channel_id, nickname: c.nickname.toLowerCase() };
-				} catch {
-					throw new Error(`Channel ${c.nickname} does not exist!`);
-				}
-
-				continue;
-			}
-
-			// if channel is live
-			this.channels[idx] = {
-				nickname: c.nickname.toLowerCase(),
-				id: parseInt(channel.data[0].user_id),
-				uptime_stats: {
-					messages_sent: 0,
-					games_played: [channel.data[0].game_name],
-					startup_time: new Date(channel.data[0].started_at),
-					user_counts: new Map<number, number>()
-				},
-				hooks: []
-			}
-		}
-
-		return this;
 	}
 }

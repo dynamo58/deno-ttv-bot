@@ -7,7 +7,6 @@ import Hook, { validate_hook } from "./Hook.ts";
 import Config from "./Config.ts";
 
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
-import "./std_redeclarations.ts";
 
 import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
 import { sleep } from "https://deno.land/x/sleep@v1.2.1/mod.ts";
@@ -19,19 +18,40 @@ export interface TwitchUserBasicInfo {
 }
 
 export interface TwitchChannel extends TwitchUserBasicInfo {
+	// tmi.js client
 	client?: Channel,
 	// statistics about a live broadcast that have to be kept all the time
 	// null if channel isn't live 
 	uptime_stats: {
+		// number of messages sent since stream went live
 		messages_sent: number,
+		// the games (categories) a streamer was in since ...
 		games_played: string[],
+		// the date when streamer went live
 		startup_time: Date,
-		// map between the user twitch ids and their message counts
+		// map between chatter user-id twitch ids and their message counts
 		user_counts: Map<number, number>
 	} | null,
+	// hooks in a channel, see ./Hook.ts for more info
 	hooks: Hook[],
+	// keep track of "pyramids" in chat
+	// pyramids are when a user types emotes in chat in consencutive messages
+	// in such quantities, that they resemble a pyramid, example:
+	// pepega00000: TriHard
+	// pepega00000: TriHard TriHard
+	// pepega00000: TriHard TriHard TriHard
+	// pepega00000: TriHard TriHard
+	// pepega00000: TriHard
+	pyramid_tracker: {
+		unit?: string,
+		user_id?: number
+		count: number,
+		max_count?: number,
+		is_ascending: boolean,
+	}
 }
 
+// credentials used to access and interact with the Twitch API 
 export interface TwitchInfo {
 	login: string,
 	oauth: string,
@@ -76,6 +96,38 @@ export default class Bot {
 		}
 	}
 
+	async init_channels() {
+		for (const [idx, c] of this.cfg.channels.entries()) {
+			const channel = await twitch.get_channel(this.cfg.twitch_info, c.nickname);
+
+			// if channel is not live
+			if (channel.data.length === 0) {
+				try {
+					const channel_id = (await twitch.id_from_nick(this.cfg.twitch_info, [c.nickname]))[0];
+					this.cfg.channels[idx] = { ...c, id: channel_id, nickname: c.nickname.toLowerCase() };
+				} catch {
+					throw new Error(`Channel ${c.nickname} does not exist!`);
+				}
+
+				continue;
+			}
+
+			// if channel is live
+			this.cfg.channels[idx] = {
+				nickname: c.nickname.toLowerCase(),
+				id: parseInt(channel.data[0].user_id),
+				uptime_stats: {
+					messages_sent: 0,
+					games_played: [channel.data[0].game_name],
+					startup_time: new Date(channel.data[0].started_at),
+					user_counts: new Map<number, number>()
+				},
+				hooks: [],
+				pyramid_tracker: { count: 0, is_ascending: true }
+			}
+		}
+	}
+
 	// -------------------------------------------------------------------------
 	// listeners
 	// -------------------------------------------------------------------------
@@ -112,9 +164,35 @@ export default class Bot {
 	async listen_channel(c: Channel, channel_idx: number) {
 		for await (const ircmsg of c) {
 			switch (ircmsg.command) {
+				// deno-lint-ignore no-case-declarations
 				case "PRIVMSG":
+					// just testing the tmi
+					if (Math.random() < 0.1) {
+						console.log(`received privmsg, ${(new Date().valueOf() - this.cfg.startup_time!.valueOf()) / (1000 * 60)}`)
+					}
 					this.handle_hooks(c, channel_idx, ircmsg);
 					this.handle_privmsg(c, channel_idx, ircmsg);
+
+					const pyr = this.cfg.channels[channel_idx].pyramid_tracker;
+					const id = parseInt(ircmsg.tags["user-id"]);
+					const msg_split = ircmsg.message.split(" ");
+					if (id === pyr.user_id && msg_split.every(s => s === pyr.unit)) {
+						if ((msg_split.length === pyr.count + 1) && pyr.is_ascending) {
+							this.cfg.channels[channel_idx].pyramid_tracker.count += 1;
+						} else if ((msg_split.length === pyr.count - 1) && pyr.is_ascending) {
+							this.cfg.channels[channel_idx].pyramid_tracker.is_ascending = false;
+							this.cfg.channels[channel_idx].pyramid_tracker.max_count = pyr.count;
+							this.cfg.channels[channel_idx].pyramid_tracker.count -= 1;
+						} else if ((msg_split.length === pyr.count - 1) && !pyr.is_ascending)
+							this.cfg.channels[channel_idx].pyramid_tracker.count -= 1;
+
+						if (pyr.count === 1 && !pyr.is_ascending)
+							c.send(`@${ircmsg.username} congrats for finishing a ${pyr.max_count}-wide pyramid PagMan 👉  ${pyr.unit}`);
+						else
+							continue;
+					}
+
+					this.cfg.channels[channel_idx].pyramid_tracker = { count: 1, user_id: id, unit: msg_split[0], is_ascending: true };
 			}
 		}
 	}
@@ -188,12 +266,12 @@ export default class Bot {
 		}
 	}
 
-	handle_hooks(c: Channel, channel_idx: number, ircmsg: IrcMessage) {
+	async handle_hooks(c: Channel, channel_idx: number, ircmsg: IrcMessage) {
 		const hooks = this.cfg.channels[channel_idx].hooks;
 
 		for (const hook of hooks) {
 			if (validate_hook(hook, ircmsg)) {
-				const cb = hook.callback();
+				const cb = await hook.callback();
 				if (cb) c.send(cb);
 			}
 		}
@@ -274,7 +352,7 @@ export default class Bot {
 			(async function foo() {
 				while (true) {
 					await sleep(c.period[0] + Math.floor(Math.random() * period_diff));
-					const out = c.execute();
+					const out = await c.execute();
 					if (out)
 						client_refs.forEach((ch) => { ch.send(out), console.log(`Ran cronjob ${c.execute} in ${ch.channelName}`) });
 				}
@@ -288,7 +366,7 @@ export default class Bot {
 
 	async run() {
 		this.cfg.startup_time = new Date();
-		await this.cfg.init_channels();
+		await this.init_channels();
 		await this.cfg.client.connect();
 		this.listen_local();
 

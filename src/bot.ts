@@ -187,12 +187,15 @@ export default class Bot {
 							this.cfg.channels[channel_idx].pyramid_tracker.count -= 1;
 
 						if (pyr.count === 1 && !pyr.is_ascending)
-							c.send(`@${ircmsg.username} congrats for finishing a ${pyr.max_count}-wide pyramid PagMan 👉  ${pyr.unit}`);
+							c.send(`@${ircmsg.username} just finished a ${pyr.max_count}-wide pyramid PagMan 👉  ${pyr.unit}`);
 						else
 							continue;
 					}
 
-					this.cfg.channels[channel_idx].pyramid_tracker = { count: 1, user_id: id, unit: msg_split[0], is_ascending: true };
+					if (ircmsg.message === msg_split[0])
+						this.cfg.channels[channel_idx].pyramid_tracker = { count: 1, user_id: id, unit: msg_split[0], is_ascending: true };
+					else
+						this.cfg.channels[channel_idx].pyramid_tracker = { count: 0, is_ascending: true };
 			}
 		}
 	}

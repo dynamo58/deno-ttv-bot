@@ -36,9 +36,7 @@ const SECONDS_IN_HOUR = 3600.0;
 const SECONDS_IN_MINUTE = 60.0;
 export function format_duration(millis: number, long_format: boolean): string {
 	const num_sec = millis / 1000;
-	if (num_sec == 0.0) {
-		return "just now";
-	}
+	if (num_sec == 0.0) return "just now";
 
 	const yrs = Math.floor(num_sec / SECONDS_IN_YEAR);
 	const dys = Math.floor((num_sec - (yrs * SECONDS_IN_YEAR)) / SECONDS_IN_DAY);

@@ -166,10 +166,12 @@ export default class Bot {
 			switch (ircmsg.command) {
 				// deno-lint-ignore no-case-declarations
 				case "PRIVMSG":
+
+					if (this.cfg.disregarded_users.includes(ircmsg.username)) continue;
 					// just testing the tmi
-					if (Math.random() < 0.1) {
-						console.log(`received privmsg, ${(new Date().valueOf() - this.cfg.startup_time!.valueOf()) / (1000 * 60)}`)
-					}
+					// if (Math.random() < 0.1) {
+					// console.log(`received privmsg, ${(new Date().valueOf() - this.cfg.startup_time!.valueOf()) / (1000 * 60)}`)
+					// }
 					this.handle_hooks(c, channel_idx, ircmsg);
 					this.handle_privmsg(c, channel_idx, ircmsg);
 
@@ -346,20 +348,22 @@ export default class Bot {
 	// -------------------------------------------------------------------------
 
 	start_cronjobs() {
-		this.cfg.cron_jobs.forEach((c) => {
-			const client_refs: Channel[] = [];
-			for (const [key, val] of this.cfg.client.channels)
-				if (!c.channel_names || c.channel_names.includes(key.slice(1)))
-					client_refs.push(val);
-			const period_diff = c.period[1] - c.period[0];
-			(async function foo() {
+		this.cfg.cron_jobs.forEach((cron) => {
+			const channel_idx_refs: number[] = [];
+			const period_diff = cron.period[1] - cron.period[0];
+			for (const [idx, channel] of this.cfg.channels.entries())
+				if (!cron.channel_names || cron.channel_names.includes(channel.nickname))
+					channel_idx_refs.push(idx);
+
+			channel_idx_refs.forEach(async (idx) => {
 				while (true) {
-					await sleep(c.period[0] + Math.floor(Math.random() * period_diff));
-					const out = await c.execute();
-					if (out)
-						client_refs.forEach((ch) => { ch.send(out), console.log(`Ran cronjob ${c.execute} in ${ch.channelName}`) });
+					await sleep(cron.period[0] + Math.floor(Math.random() * period_diff));
+					if (!cron.requires_live || this.cfg.channels[idx].uptime_stats) {
+						const out = await cron.execute();
+						if (out) this.cfg.channels[idx].client!.send(out);
+					}
 				}
-			})()
+			})
 		});
 	}
 

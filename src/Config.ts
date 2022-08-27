@@ -5,6 +5,7 @@ import * as twitch from "./apis/twitch.ts";
 import Hook from "./Hook.ts";
 import { TwitchInfo, TwitchChannel } from "./bot.ts";
 import CronJob from "./CronJob.ts";
+import { ICronJobConstructor } from "./CronJob.ts";
 
 import "./std_redeclarations.ts";
 
@@ -54,8 +55,8 @@ export default class Config {
 	// builder pattern methods
 	// ------------------------------------------------------------------------
 
-	add_cronjob(c: CronJob): Config {
-		this.cron_jobs.push(c);
+	add_cronjob(c: ICronJobConstructor): Config {
+		this.cron_jobs.push(new CronJob(c));
 		return this;
 	}
 

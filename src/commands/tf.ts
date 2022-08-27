@@ -2,7 +2,7 @@ import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import * as twitch from "../apis/twitch.ts";
 
 const DEFAULT_COUNT = 10;
-const MIN_COUNT = 50;
+const MIN_COUNT = 1;
 const MAX_COUNT = 50;
 
 const Tf: CommandModule = {

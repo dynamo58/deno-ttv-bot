@@ -1,15 +1,26 @@
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import { get_7tv_emotes } from "../apis/adamcy.ts";
 
+const MIN_COUNT = 1;
+const DEFAULT_COUNT = 7;
+const MAX_COUNT = 20;
 
 const New7Tv: CommandModule = {
 	sufficient_privilege: 0,
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const emotes = await get_7tv_emotes(ctx.channel.nickname);
-
+		const kwargs = ctx.kwargs();
+		let count: number | null = null;
+		const _count = kwargs.get("count");
+		if (_count) {
+			try { count = Math.clamp(parseInt(_count), MIN_COUNT, MAX_COUNT) }
+			catch { count = DEFAULT_COUNT }
+		} else {
+			count = DEFAULT_COUNT;
+		}
 		const latest = emotes
-			.slice(-7)
+			.slice(-count)
 			.map(e => e.code);
 
 		return {

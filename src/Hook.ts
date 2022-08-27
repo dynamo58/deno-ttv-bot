@@ -5,7 +5,7 @@ import { IrcMessage } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 export default interface Hook {
 	substring_criterion?: string,
 	nickname_criterion?: string,
-	callback: () => string | void | Promise<string> | Promise<void>,
+	execute: () => string | void | Promise<string> | Promise<void>,
 }
 
 

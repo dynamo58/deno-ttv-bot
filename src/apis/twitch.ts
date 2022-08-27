@@ -1,4 +1,4 @@
-import { TwitchInfo } from "../bot.ts";
+import { TwitchInfo } from "../Bot.ts";
 import { CreateClip, HelixChannel, HelixUsers, TmiChatters } from "./twitch.d.ts";
 
 export async function id_from_nick(t: TwitchInfo, nicks: string[]): Promise<number[]> {

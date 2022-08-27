@@ -1,6 +1,6 @@
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import * as twitch from "../apis/twitch.ts";
-import { TwitchInfo } from "../bot.ts";
+import { TwitchInfo } from "../Bot.ts";
 import { format_duration } from "../std_redeclarations.ts";
 
 const get_most_active_chatter_nickname = async (t: TwitchInfo, chatter_counts: Map<number, number>): Promise<[string, number] | null> => {

@@ -4,7 +4,7 @@ interface ActualTags extends Tags {
 	// but the actual constructed interface has it...
 	badges: string,
 }
-import { TwitchChannel, TwitchInfo, TwitchUserBasicInfo } from "./bot.ts";
+import { TwitchChannel, TwitchInfo, TwitchUserBasicInfo } from "./Bot.ts";
 import Config from "./Config.ts";
 
 import Ping from "./commands/ping.ts";

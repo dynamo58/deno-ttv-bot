@@ -276,7 +276,7 @@ export default class Bot {
 
 		for (const hook of hooks) {
 			if (validate_hook(hook, ircmsg)) {
-				const cb = await hook.callback();
+				const cb = await hook.execute();
 				if (cb) c.send(cb);
 			}
 		}
@@ -385,10 +385,7 @@ export default class Bot {
 				this.channel_info_loop_fetch(idx);
 			}, 2 * 60 * 1000)
 
-			return {
-				...c,
-				client: channel_client
-			}
+			this.cfg.channels[idx].client = channel_client;
 		});
 
 		this.start_cronjobs();

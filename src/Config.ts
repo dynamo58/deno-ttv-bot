@@ -3,7 +3,7 @@ import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 
 import * as twitch from "./apis/twitch.ts";
 import Hook from "./Hook.ts";
-import { TwitchInfo, TwitchChannel } from "./bot.ts";
+import { TwitchInfo, TwitchChannel } from "./Bot.ts";
 import CronJob from "./CronJob.ts";
 import { ICronJobConstructor } from "./CronJob.ts";
 

@@ -12,7 +12,9 @@ const Weather: CommandModule = {
 				output: `Please provide a location.`,
 			}
 
-		const weather = await get_weather(loc);
+		const res = await get_weather(loc);
+		if (res.status !== 200) return { is_success: false, output: `@${ctx.caller} something messed up ApuApustaja TeaTime` }
+		const weather = res.data!;
 		return {
 			is_success: true,
 			output: `Weather in ${weather.recognized_area}: feels like ${weather.feels_like_c}°C, ${weather.sky_condition}`

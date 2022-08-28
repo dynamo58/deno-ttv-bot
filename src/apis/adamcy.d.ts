@@ -3,7 +3,7 @@ interface Url {
 	url: string;
 }
 
-export interface SevenTvResponse {
+export interface SevenTvEmote {
 	provider: number;
 	code: string;
 	urls: Url[];

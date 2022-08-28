@@ -25,7 +25,9 @@ const Tf: CommandModule = {
 			count = DEFAULT_COUNT;
 		}
 
-		const _c = (await twitch.get_chatters(ctx.channel.nickname)).chatters;
+		const res = (await twitch.get_chatters(ctx.channel.nickname));
+		if (res.status !== 200) return { is_success: false, output: `@${ctx.caller} something messed up ApuApustaja TeaTime` }
+		const _c = res.data!.chatters;
 		const chatters = [..._c.admins, ..._c.broadcaster, ..._c.global_mods, ..._c.moderators, ..._c.staff, ..._c.viewers, ..._c.vips];
 		// TODO: generating randoms and skipping duplicated might be better, no????
 		// ---> benchmark

@@ -6,11 +6,15 @@ const Clip: CommandModule = {
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const r = await twitch.create_clip(ctx.twitch_info, ctx.channel.id);
+		if (r.status !== 200) return {
+			is_success: false,
+			output: `@${ctx.caller} something messed up ApuApustaja TeaTime`,
+		}
+		const data = r.data!;
 
-		console.log(r);
 		return {
 			is_success: true,
-			output: `https://clips.twitch.tv/${r.data[0].id}`,
+			output: `https://clips.twitch.tv/${data.data[0].id}`,
 		}
 	},
 

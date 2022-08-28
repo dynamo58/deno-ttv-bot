@@ -68,9 +68,11 @@ export default class Bot {
 
 	async channel_info_loop_fetch(channel_idx: number) {
 		const r = await twitch.get_channel(this.cfg.twitch_info, this.cfg.channels[channel_idx].nickname);
+		if (r.status !== 200) { console.log(`Getting channel information for ${this.cfg.channels[channel_idx].nickname} about failed.`); return }
 		console.log(`Fetched info for channel ${this.cfg.channels[channel_idx].nickname}`);
+		const data = r.data!.data;
 
-		if (r.data.length === 0) {
+		if (data.length === 0) {
 			// channel is offline
 			if (this.cfg.channels[channel_idx].uptime_stats !== null) {
 				// channel just went offline
@@ -84,26 +86,30 @@ export default class Bot {
 			// channel just went live
 			this.cfg.channels[channel_idx].uptime_stats = {
 				messages_sent: 0,
-				games_played: [r.data[0].game_name],
-				startup_time: new Date(r.data[0].started_at),
+				games_played: [data[0].game_name],
+				startup_time: new Date(data[0].started_at),
 				user_counts: new Map<number, number>()
 			}
 		} else {
 			// channel has been live for some time
 
-			if (!this.cfg.channels[channel_idx].uptime_stats!.games_played.includes(r.data[0].game_name))
-				this.cfg.channels[channel_idx].uptime_stats!.games_played.push(r.data[0].game_name);
+			if (!this.cfg.channels[channel_idx].uptime_stats!.games_played.includes(data[0].game_name))
+				this.cfg.channels[channel_idx].uptime_stats!.games_played.push(data[0].game_name);
 		}
 	}
 
 	async init_channels() {
 		for (const [idx, c] of this.cfg.channels.entries()) {
-			const channel = await twitch.get_channel(this.cfg.twitch_info, c.nickname);
+			const res = await twitch.get_channel(this.cfg.twitch_info, c.nickname);
+			if (res.status !== 200) throw new Error(`Failed to get initiate channel ${c.nickname}`);
+			const channel = res.data!;
 
 			// if channel is not live
 			if (channel.data.length === 0) {
 				try {
-					const channel_id = (await twitch.id_from_nick(this.cfg.twitch_info, [c.nickname]))[0];
+					const res = await twitch.id_from_nick(this.cfg.twitch_info, [c.nickname]);
+					if (res.status !== 200) throw new Error(`Failed to get initiate channel ${c.nickname}`);
+					const channel_id = res.data![0];
 					this.cfg.channels[idx] = { ...c, id: channel_id, nickname: c.nickname.toLowerCase() };
 				} catch {
 					throw new Error(`Channel ${c.nickname} does not exist!`);

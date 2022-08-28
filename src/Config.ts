@@ -61,7 +61,10 @@ export default class Config {
 	}
 
 	async add_sudoers(sudoers: string[]): Promise<Config> {
-		const sudoer_ids = await twitch.id_from_nick(this.twitch_info, sudoers);
+		const r = await twitch.id_from_nick(this.twitch_info, sudoers);
+		if (r.status !== 200) throw new Error(`Some sudoer isn't real or Twitch bricked`);
+		const sudoer_ids = r.data!;
+
 		if (sudoer_ids.length !== sudoers.length) throw new Error(`One or more sudoers aren't real Twitch users`);
 		this.sudoers = sudoer_ids;
 		return this;

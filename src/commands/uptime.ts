@@ -15,7 +15,9 @@ const Uptime: CommandModule = {
 			}
 		}
 
-		const channel_info = await twitch.get_channel(ctx.twitch_info, ctx.channel.nickname);
+		const res = await twitch.get_channel(ctx.twitch_info, ctx.channel.nickname);
+		if (res.status !== 200) return { is_success: false, output: `@${ctx.caller} something messed up ApuApustaja TeaTime` }
+		const channel_info = res.data!;
 
 		if (channel_info.data.length === 0)
 			return {

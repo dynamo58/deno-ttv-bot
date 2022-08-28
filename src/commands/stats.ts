@@ -12,7 +12,7 @@ const get_most_active_chatter_nickname = async (t: TwitchInfo, chatter_counts: M
 
 	if (highest === null) return null;
 
-	const nick = (await twitch.nick_from_id(t, [highest[0]]))[0];
+	const nick = (await twitch.nick_from_id(t, [highest[0]])).data![0];
 	return [nick, highest![1]];
 }
 
@@ -29,13 +29,15 @@ const Stats: CommandModule = {
 		const uptime_fmt = format_duration((new Date()).valueOf() - (ctx.channel.uptime_stats!.startup_time).valueOf(), false);
 		const games = ctx.channel.uptime_stats!.games_played.join(", ");
 		const lines = ctx.channel.uptime_stats!.messages_sent;
-		const most_active_chatter = await get_most_active_chatter_nickname(ctx.twitch_info, ctx.channel.uptime_stats!.user_counts);
-		const chatter_str = most_active_chatter === null ? "" : `| Most active chatter: ${most_active_chatter[0]} with ${most_active_chatter[1]} messages Chatting`;
+		try {
+			const most_active_chatter = await get_most_active_chatter_nickname(ctx.twitch_info, ctx.channel.uptime_stats!.user_counts);
+			const chatter_str = most_active_chatter === null ? "" : `| Most active chatter: ${most_active_chatter[0]} with ${most_active_chatter[1]} messages Chatting`;
 
-		return {
-			is_success: true,
-			output: `Uptime: ${uptime_fmt} | Games played: ${games} | Message count: ${lines} ${chatter_str}`,
-		}
+			return {
+				is_success: true,
+				output: `Uptime: ${uptime_fmt} | Games played: ${games} | Message count: ${lines} ${chatter_str}`,
+			}
+		} catch { return { is_success: false, output: `@${ctx.caller} something messed up ApuApustaja TeaTime` } }
 	},
 
 	description(): string {

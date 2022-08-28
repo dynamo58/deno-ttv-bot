@@ -9,7 +9,10 @@ const New7Tv: CommandModule = {
 	sufficient_privilege: 0,
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
-		const emotes = await get_7tv_emotes(ctx.channel.nickname);
+		const emotes_res = await get_7tv_emotes(ctx.channel.nickname);
+		if (emotes_res.status !== 200) return { is_success: false, output: `@${ctx.caller} the 7tv API failed, please try again later` }
+		const emotes = emotes_res.data!;
+
 		const kwargs = ctx.kwargs();
 		let count: number | null = null;
 		const _count = kwargs.get("count");

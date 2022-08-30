@@ -11,11 +11,13 @@ export default interface Hook {
 
 export function validate_hook(h: Hook, ircmsg: IrcMessage): boolean {
 	if (h.substring_criterion && ircmsg.message.toLowerCase().includes(h.substring_criterion)) {
-		if (h.nickname_criterion)
+		if (h.nickname_criterion) {
 			if (ircmsg.username === h.nickname_criterion)
 				return true;
 			else
 				return false;
+		}
+
 		return true;
 	}
 

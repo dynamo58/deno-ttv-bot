@@ -16,6 +16,15 @@ async function main(): Promise<void> {
 			substring_criterion: "just resubscribed",
 			execute: () => "welcome back to the g spot gQueen",
 		})
+		// .add_hook("gkey", {
+		// nickname_criterion: "dk10___",
+		// substring_criterion: "?",
+		// execute: () => "use google dk FailFish",
+		// })
+		// .add_hook("gkey", {
+		// nickname_criterion: "dk10___",
+		// execute: () => ["peepoClown  👆 ", "FOUNDTHECLOWN", "Clown 👆", "🤡 "].random_el(),
+		// })
 		.add_cronjob({
 			requires_live: true,
 			channel_names: ["gkey"],

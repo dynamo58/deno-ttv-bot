@@ -1,15 +1,15 @@
-import { Command, CommandContext, CommandResult, CommandModule } from "../Command.ts";
+import { CommandContext, CommandResult, CommandModule } from "../Command.ts";
 
 const Commands: CommandModule = {
 	sufficient_privilege: 0,
 
 	// deno-lint-ignore require-await
-	async execute(_: CommandContext): Promise<CommandResult> {
-		const global_cmds = Command.get_all_commands().join(", ");
+	async execute(ctx: CommandContext): Promise<CommandResult> {
+		const global_cmds = ctx.all_commands.join(", ");
 
 		return {
 			is_success: true,
-			output: `Global commands: ${global_cmds}`,
+			output: `@${ctx.caller} global commands: ${global_cmds}`,
 		}
 	},
 

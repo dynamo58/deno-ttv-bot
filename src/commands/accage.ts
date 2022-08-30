@@ -10,8 +10,10 @@ const Accage: CommandModule = {
 		const pot_target = kwargs.get("user");
 		const target = pot_target ? pot_target! : ctx.caller.nickname;
 
-		const user = (await twitch.get_users(ctx.twitch_info, [target]))[0];
-		const age = format_duration((new Date()).valueOf() - (new Date(user.created_at)).valueOf(), false);
+		const res = await twitch.get_users(ctx.twitch_info, [target]);
+		if (res.status !== 200) return { is_success: false, output: `@${ctx.caller.nickname} something went haywire ApuApustaja TeaTime (external error).` }
+		if (res.data!.length === 0) return { is_success: false, output: `@${ctx.caller.nickname} that user doesn't exist.` }
+		const age = format_duration((new Date()).valueOf() - (new Date(res.data![0].created_at)).valueOf(), false);
 
 		if (target === ctx.caller.nickname)
 			return {

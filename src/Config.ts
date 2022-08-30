@@ -4,10 +4,22 @@ import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import * as twitch from "./apis/twitch.ts";
 import Hook from "./Hook.ts";
 import { TwitchInfo, TwitchChannel } from "./Bot.ts";
-import CronJob from "./CronJob.ts";
-import { ICronJobConstructor } from "./CronJob.ts";
+import CronJob, { ICronJobConstructor } from "./CronJob.ts";
+import { CommandModule } from "./Command.ts";
 
 import "./std_redeclarations.ts";
+
+import Ping from "./commands/ping.ts";
+import New7Tv from "./commands/7tv.ts";
+import Stats from "./commands/stats.ts";
+import Commands from "./commands/commands.ts";
+import Tf from "./commands/tf.ts";
+import Sudo from "./commands/sudo.ts";
+import Clip from "./commands/clip.ts";
+import Weather from "./commands/weather.ts";
+import Accage from "./commands/accage.ts";
+import Uptime from "./commands/uptime.ts";
+import Remind, { Reminder } from "./commands/remind.ts";
 
 interface IConfigConstructor {
 	cmd_prefix?: string,
@@ -24,6 +36,9 @@ export default class Config {
 	disregarded_users: string[];
 	startup_time: Date | null;
 	cron_jobs: CronJob[];
+	// map between user-ids and Reminder interfaces
+	reminders: Map<number, Reminder[]>;
+	commands: Map<string, CommandModule>;
 
 	constructor(cfg: IConfigConstructor) {
 		try {
@@ -46,9 +61,27 @@ export default class Config {
 			};
 			this.startup_time = null;
 			this.cron_jobs = [];
-		} catch {
-			throw new Error("Credentials not in environment!");
+			this.reminders = new Map();
+			this.commands = new Map([
+				["remind", Remind],
+				["ping", Ping],
+				["commands", Commands],
+				["new7tv", New7Tv],
+				["stats", Stats],
+				["tf", Tf],
+				["sudo", Sudo],
+				["clip", Clip],
+				["weather", Weather],
+				["accage", Accage],
+				["uptime", Uptime],
+			])
+		} catch (e) {
+			throw e;
 		}
+	}
+
+	get_all_commands(): string[] {
+		return Array.from(this.commands.keys());
 	}
 
 	// -------------------------------------------------------------------------
@@ -102,6 +135,8 @@ export default class Config {
 
 		return this;
 	}
+
+	// add_reminders
 
 	// -------------------------------------------------------------------------
 	// file system IO

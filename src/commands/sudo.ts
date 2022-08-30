@@ -3,8 +3,9 @@ import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 const Sudo: CommandModule = {
 	sufficient_privilege: 0,
 
+	// deno-lint-ignore require-await
 	async execute(ctx: CommandContext): Promise<CommandResult> {
-		if (!ctx.sudoers.includes(ctx.caller.id)) return await {
+		if (!ctx.sudoers.includes(ctx.caller.id)) return {
 			is_success: false,
 			output: `Only hackermen allowed B)`,
 		}
@@ -24,7 +25,7 @@ const Sudo: CommandModule = {
 					output: "Going down FeelsBadMan 👍 ",
 				}
 			default:
-				return await {
+				return {
 					is_success: false,
 					output: `Subcommand ${ctx.args[0]} not recognized.`
 				}

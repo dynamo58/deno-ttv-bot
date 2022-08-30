@@ -9,6 +9,51 @@ declare global {
 	}
 
 	function format_duration(millis: number, long_format: boolean): string;
+
+	interface String {
+		parse_to_date(): Date | null;
+		split_at_every_char_to_map(c: string): Map<string, string>;
+	}
+}
+
+// example according to intended use:
+// "15h16m1s"   =>  h -> 15, m -> 16, s -> 1
+String.prototype.split_at_every_char_to_map = function (c: string): Map<string, string> {
+	const out = new Map<string, string>();
+	let idx = 0;
+	const chars = c.split("");
+
+	let curr_str = "";
+	while (idx < this.length) {
+		if (chars.includes(this[idx])) {
+			out.set(this[idx], curr_str);
+			curr_str = "";
+			idx += 1;
+			continue
+		}
+
+		curr_str += this[idx];
+		idx += 1;
+	}
+
+	return out;
+}
+
+// null signifies bad input
+String.prototype.parse_to_date = function (): Date | null {
+	const base_date = new Date();
+	const split = this.split_at_every_char_to_map("yMdhms");
+
+	try {
+		if (split.get("y")) { const count = parseInt(split.get("y")!); if (!count) throw ""; base_date.setFullYear(base_date.getFullYear() + parseInt(split.get("y")!)) }
+		if (split.get("M")) { const count = parseInt(split.get("M")!); if (!count) throw ""; base_date.setMonth(base_date.getMonth() + parseInt(split.get("M")!)) }
+		if (split.get("d")) { const count = parseInt(split.get("d")!); if (!count) throw ""; base_date.setDate(base_date.getDate() + parseInt(split.get("d")!)) }
+		if (split.get("h")) { const count = parseInt(split.get("h")!); if (!count) throw ""; base_date.setHours(base_date.getHours() + parseInt(split.get("h")!)) }
+		if (split.get("m")) { const count = parseInt(split.get("m")!); if (!count) throw ""; base_date.setMinutes(base_date.getMinutes() + parseInt(split.get("m")!)) }
+		if (split.get("s")) { const count = parseInt(split.get("s")!); if (!count) throw ""; base_date.setSeconds(base_date.getSeconds() + parseInt(split.get("s")!)) }
+
+		return base_date;
+	} catch { return null }
 }
 
 Math.clamp = function (n: number, min: number, max: number): number {

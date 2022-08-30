@@ -6,10 +6,11 @@ const Ping: CommandModule = {
 	// as UserPrivilege.{...}, so it has to look this obfuscated :(
 	sufficient_privilege: 0,
 
+	// deno-lint-ignore require-await
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const uptime_mls = (new Date()).valueOf() - ctx.startup_time.valueOf();
 
-		return await {
+		return {
 			is_success: true,
 			output: `Pong! Running for ${format_duration(uptime_mls, false)}.`,
 		}

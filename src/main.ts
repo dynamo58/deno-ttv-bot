@@ -4,8 +4,11 @@ import Config from "./Config.ts";
 import { get_7tv_emotes } from "./apis/adamcy.ts";
 
 async function main(): Promise<void> {
-	const config = new Config({ cmd_prefix: "$", })
-		.join_channels(["gkey", "pepega00000"])
+	const config = new Config({
+		cmd_prefix: "$",
+		database_kind: "mongo",
+	})
+		.join_channels(["gkey", "pepega00000", "99sunrise"])
 		.disregard_users([
 			"lovcen", "fossabot", "fightbot", "snusbot",
 			"streamelements", "schnozebot", "thepositiveBot",
@@ -16,15 +19,6 @@ async function main(): Promise<void> {
 			substring_criterion: "just resubscribed",
 			execute: () => "welcome back to the g spot gQueen",
 		})
-		// .add_hook("gkey", {
-		// nickname_criterion: "dk10___",
-		// substring_criterion: "?",
-		// execute: () => "use google dk FailFish",
-		// })
-		// .add_hook("gkey", {
-		// nickname_criterion: "dk10___",
-		// execute: () => ["peepoClown  👆 ", "FOUNDTHECLOWN", "Clown 👆", "🤡 "].random_el(),
-		// })
 		.add_cronjob({
 			requires_live: true,
 			channel_names: ["gkey"],

@@ -21,8 +21,11 @@ import Accage from "./commands/accage.ts";
 import Uptime from "./commands/uptime.ts";
 import Remind, { Reminder } from "./commands/remind.ts";
 
+type DatabaseKind = undefined | "mongo";
+
 interface IConfigConstructor {
 	cmd_prefix?: string,
+	database_kind: DatabaseKind,
 }
 
 export default class Config {
@@ -39,6 +42,7 @@ export default class Config {
 	// map between user-ids and Reminder interfaces
 	reminders: Map<number, Reminder[]>;
 	commands: Map<string, CommandModule>;
+	database_kind: DatabaseKind;
 
 	constructor(cfg: IConfigConstructor) {
 		try {
@@ -51,7 +55,8 @@ export default class Config {
 			this.client = new TwitchChat(twitch_oauth, twitch_login);
 			this.channels = [];
 			this.disregarded_users = [];
-			this.sudoers = []
+			this.sudoers = [];
+			this.database_kind = cfg.database_kind;
 			this.loopback_address = null;
 			this.twitch_info = {
 				login: twitch_login,
@@ -134,23 +139,5 @@ export default class Config {
 		});
 
 		return this;
-	}
-
-	// add_reminders
-
-	// -------------------------------------------------------------------------
-	// file system IO
-	// -------------------------------------------------------------------------
-
-	async save_stats_to_file(channel: TwitchChannel) {
-		try {
-			await Deno.writeTextFile(
-				`./cache/${channel.nickname}__${(new Date()).toISOString()}.json`,
-				JSON.stringify(channel)
-			);
-			console.log(`Saved stats for ${channel.nickname}.`);
-		} catch (e) {
-			console.log(`Failed saving stats for ${channel.nickname}.\n${e}`);
-		}
 	}
 }

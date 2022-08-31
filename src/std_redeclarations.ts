@@ -2,13 +2,16 @@ declare global {
 	interface Array<T> {
 		random_el(): T;
 		shuffle(): void;
+		sum(): number,
 	}
+
+	// interface Array<number> {
+	// 
+	// }
 
 	interface Math {
 		clamp(n: number, min: number, max: number): number,
 	}
-
-	function format_duration(millis: number, long_format: boolean): string;
 
 	interface String {
 		parse_to_date(): Date | null;
@@ -73,6 +76,12 @@ Array.prototype.shuffle = function () {
 		this[i] = this[j];
 		this[j] = temp;
 	}
+}
+
+Array<number>.prototype.sum = function () {
+	let s = 0;
+	this.forEach(e => s += e);
+	return s;
 }
 
 const SECONDS_IN_YEAR = 31556952.0;

@@ -1,19 +1,22 @@
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 
-import { Channel, IrcMessage } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
-import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
+import { format_duration } from "./std_redeclarations.ts";
 
+import { Channel, IrcMessage } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import * as twitch from "./apis/twitch.ts";
 import { CommandContext, ircmsg_is_command_fmt } from "./Command.ts";
 import Hook, { validate_hook } from "./Hook.ts";
 import Config from "./Config.ts";
+import { Reminder } from "./commands/remind.ts";
 
-import { format_duration } from "./std_redeclarations.ts";
-
+import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
 import { sleep } from "https://deno.land/x/sleep@v1.2.1/mod.ts";
 import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
-import { Reminder } from "./commands/remind.ts";
+
+import { MongoClient, } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
+import * as db from "./db/db.ts";
+
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -64,6 +67,8 @@ export interface TwitchInfo {
 
 export default class Bot {
 	cfg: Config;
+	// a MongoDB database instance
+	db_client?: MongoClient;
 
 	constructor(cfg: Config) {
 		this.cfg = cfg;
@@ -79,7 +84,10 @@ export default class Bot {
 			// channel is offline
 			if (this.cfg.channels[channel_idx].uptime_stats !== null) {
 				// channel just went offline
-				await this.cfg.save_stats_to_file(this.cfg.channels[channel_idx]);
+				if (this.db_client) {
+					await db.save_stream_stats(this.db_client!, this.cfg.channels[channel_idx])
+					console.log(`Saved stream data after ${this.cfg.channels[channel_idx].nickname} ended their stream.`)
+				}
 			}
 			this.cfg.channels[channel_idx].uptime_stats = null;
 			return;
@@ -176,10 +184,18 @@ export default class Bot {
 				case "PRIVMSG":
 					if (this.cfg.disregarded_users.includes(ircmsg.username)) continue;
 
+					// just some tests
+					// if (ircmsg.username === "pepega00000" && ircmsg.message === "test") {
+					// 	console.log("Xd")
+					// 	await db.save_stream_stats(this.db_client!, this.cfg.channels[2]);
+					// 	console.log("Xd11")
+					// }
+
 					this.handle_hooks(c, channel_idx, ircmsg);
-					this.handle_privmsg(c, channel_idx, ircmsg);
+					this.handle_commands(c, ircmsg);
 					this.handle_pyramid(c, channel_idx, ircmsg);
 					this.handle_reminders(c, ircmsg);
+					this.handle_stats(channel_idx, ircmsg);
 			}
 		}
 	}
@@ -235,7 +251,7 @@ export default class Bot {
 			this.cfg.channels[channel_idx].pyramid_tracker = { count: 0, is_ascending: true };
 	}
 
-	async handle_privmsg(c: Channel, channel_idx: number, ircmsg: IrcMessage) {
+	async handle_commands(c: Channel, ircmsg: IrcMessage) {
 		if (ircmsg_is_command_fmt(ircmsg, this.cfg.cmd_prefix) &&
 			!this.cfg.disregarded_users.includes(ircmsg.username)
 		) {
@@ -286,7 +302,9 @@ export default class Bot {
 			}
 			console.log(`Ran ${ctx.cmd.toString()} in ${ircmsg.channel} by ${ircmsg.username}`);
 		}
+	}
 
+	handle_stats(channel_idx: number, ircmsg: IrcMessage) {
 		if (this.cfg.channels[channel_idx].uptime_stats !== null) {
 			this.cfg.channels[channel_idx].uptime_stats!.messages_sent += 1;
 			const user_id = parseInt(ircmsg.tags["user-id"]);
@@ -415,6 +433,13 @@ export default class Bot {
 
 			this.cfg.channels[idx].client = channel_client;
 		});
+
+		if (this.cfg.database_kind === "mongo") {
+			const mongo = new MongoClient();
+			await mongo.connect(Deno.env.get("MONGODB_SRV")!)
+			console.log(`Successfully connected to MongoDB database`);
+			this.db_client = mongo;
+		}
 
 		this.start_cronjobs();
 		// this.cfg.loopback_address = await this.get_loopback_address();

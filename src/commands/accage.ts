@@ -11,19 +11,19 @@ const Accage: CommandModule = {
 		const target = pot_target ? pot_target! : ctx.caller.nickname;
 
 		const res = await twitch.get_users(ctx.twitch_info, [target]);
-		if (res.status !== 200) return { is_success: false, output: `@${ctx.caller.nickname} something went haywire ApuApustaja TeaTime (external error).` }
-		if (res.data!.length === 0) return { is_success: false, output: `@${ctx.caller.nickname} that user doesn't exist.` }
+		if (res.status !== 200) return { is_success: false, output: `something went haywire ApuApustaja TeaTime (external error).` }
+		if (res.data!.length === 0) return { is_success: false, output: `that user doesn't exist.` }
 		const age = format_duration((new Date()).valueOf() - (new Date(res.data![0].created_at)).valueOf(), false);
 
 		if (target === ctx.caller.nickname)
 			return {
 				is_success: true,
-				output: `@${ctx.caller.nickname} your account is ${age} old.`,
+				output: `your account is ${age} old.`,
 			}
 		else
 			return {
 				is_success: true,
-				output: `@${ctx.caller.nickname} ${target}'s account is ${age} old.`,
+				output: `${target}'s account is ${age} old.`,
 			}
 	},
 

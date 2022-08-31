@@ -23,7 +23,7 @@ const Stats: CommandModule = {
 		if (ctx.channel.uptime_stats === null)
 			return {
 				is_success: true,
-				output: `Channel is not live.`,
+				output: `channel is not live.`,
 			}
 
 		const uptime_fmt = format_duration((new Date()).valueOf() - (ctx.channel.uptime_stats!.startup_time).valueOf(), false);
@@ -37,7 +37,7 @@ const Stats: CommandModule = {
 				is_success: true,
 				output: `Uptime: ${uptime_fmt} | Games played: ${games} | Message count: ${lines} ${chatter_str}`,
 			}
-		} catch { return { is_success: false, output: `@${ctx.caller} something messed up ApuApustaja TeaTime` } }
+		} catch { return { is_success: false, output: `something went haywire ApuApustaja TeaTime` } }
 	},
 
 	description(): string {

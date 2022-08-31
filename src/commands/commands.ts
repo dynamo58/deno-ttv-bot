@@ -9,7 +9,7 @@ const Commands: CommandModule = {
 
 		return {
 			is_success: true,
-			output: `@${ctx.caller} global commands: ${global_cmds}`,
+			output: `global commands: ${global_cmds}`,
 		}
 	},
 

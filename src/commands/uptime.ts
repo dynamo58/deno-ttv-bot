@@ -11,7 +11,7 @@ const Uptime: CommandModule = {
 				format_duration((new Date()).valueOf() - (ctx.channel.uptime_stats!.startup_time).valueOf(), false);
 			return {
 				is_success: true,
-				output: `@${ctx.caller} ${ctx.channel} has been live for ${uptime_hrs}.`,
+				output: `@${ctx.caller} ${ctx.channel.nickname} has been live for ${uptime_hrs}.`,
 			}
 		}
 
@@ -28,7 +28,7 @@ const Uptime: CommandModule = {
 		const uptime_hrs = format_duration((new Date()).valueOf() - (new Date(channel_info.data[0].started_at)).valueOf(), false);
 		return {
 			is_success: true,
-			output: `@${ctx.caller.nickname} ${ctx.channel} has been live for ${uptime_hrs}.`,
+			output: `@${ctx.caller.nickname} ${ctx.channel.nickname} has been live for ${uptime_hrs}.`,
 		}
 	},
 

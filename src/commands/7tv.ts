@@ -10,7 +10,7 @@ const New7Tv: CommandModule = {
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const emotes_res = await get_7tv_emotes(ctx.channel.nickname);
-		if (emotes_res.status !== 200) return { is_success: false, output: `@${ctx.caller} the 7tv API failed, please try again later` }
+		if (emotes_res.status !== 200) return { is_success: false, output: `the 7tv API failed, please try again later` }
 		const emotes = emotes_res.data!;
 
 		const kwargs = ctx.kwargs();

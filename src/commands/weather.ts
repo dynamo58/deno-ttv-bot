@@ -17,7 +17,7 @@ const Weather: CommandModule = {
 		const weather = res.data!;
 		return {
 			is_success: true,
-			output: `Weather in ${weather.recognized_area}: feels like ${weather.feels_like_c}°C, ${weather.sky_condition}`
+			output: `${weather.recognized_area}: feels like ${weather.feels_like_c}°C, ${weather.sky_condition}`
 		}
 	},
 

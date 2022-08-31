@@ -276,13 +276,11 @@ export default class Bot {
 					if (cmd) {
 						const res = await cmd!.execute(ctx);
 						if (res.is_success)
-							c.send(res.output || "cmd succeded");
+							c.send(`@${ctx.caller.nickname} ${res.output}` || "cmd succeded");
 						else
-							c.send(res.output || "cmd failed");
+							c.send(`@${ctx.caller.nickname} ${res.output}` || "cmd failed");
 						if (res.system_commands)
-							for (const c of res.system_commands) {
-								eval(c);
-							}
+							for (const c of res.system_commands) eval(c);
 					}
 				}
 			}

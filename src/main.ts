@@ -9,6 +9,7 @@ async function main(): Promise<void> {
 		database_kind: "mongo",
 	})
 		.join_channels(["gkey", "pepega00000", "99sunrise"])
+		.enable_7tv_notifications()
 		.disregard_users([
 			"lovcen", "fossabot", "fightbot", "snusbot",
 			"streamelements", "schnozebot", "thepositiveBot",

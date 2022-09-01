@@ -2,6 +2,8 @@ import { TwitchChat } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 
 import * as twitch from "./apis/twitch.ts";
+import * as seven_tv from "./apis/7tv.ts";
+
 import Hook from "./Hook.ts";
 import { TwitchInfo, TwitchChannel } from "./Bot.ts";
 import CronJob, { ICronJobConstructor } from "./CronJob.ts";
@@ -137,6 +139,48 @@ export default class Config {
 			substring_criterion: hook.substring_criterion?.toLowerCase(),
 			nickname_criterion: hook.nickname_criterion?.toLowerCase(),
 		});
+
+		return this;
+	}
+
+	enable_7tv_notifications(): Config {
+		// wym callback hell?
+		seven_tv.get_users(this.channels.map(c => c.nickname))
+			.then(users => {
+				// the 7tv API is just fucked... I would never make it this wasteful
+				// if it wasn't for that reason
+				users.unwrap().forEach((u, idx) => {
+					const ws = new WebSocket('wss://events.7tv.io/v3');
+					ws.addEventListener('open', function open() {
+						ws.send(JSON.stringify({
+							op: 35,
+							d: {
+								type: "emote_set.update",
+								condition: {
+									object_id: u.id,
+								}
+							}
+						}))
+					});
+
+					ws.addEventListener('message', (data) => {
+						const d = JSON.parse(data.data).d;
+
+						if (d.body) {
+							const client = this.channels[idx].client;
+							if (d.body.pulled) { // an emote was removed
+								const emote_name = d.body.pulled[0].old_value.name;
+								if (client) client.send(`7tvM an emote was removed: ${emote_name}`);
+							}
+
+							if (d.body.pushed) { // an emote was added
+								const emote_name = d.body.pushed[0].value.name;
+								if (client) client.send(`7tvM new emote added: ${emote_name}`);
+							}
+						}
+					});
+				});
+			});
 
 		return this;
 	}

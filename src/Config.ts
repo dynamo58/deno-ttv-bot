@@ -22,6 +22,7 @@ import Weather from "./commands/weather.ts";
 import Accage from "./commands/accage.ts";
 import Uptime from "./commands/uptime.ts";
 import Remind, { Reminder } from "./commands/remind.ts";
+import Kappa from "./commands/kappa.ts";
 
 type DatabaseKind = undefined | "mongo";
 
@@ -81,6 +82,7 @@ export default class Config {
 				["weather", Weather],
 				["accage", Accage],
 				["uptime", Uptime],
+				["kappa", Kappa]
 			])
 		} catch (e) {
 			throw e;

@@ -1,6 +1,6 @@
 declare global {
 	interface Array<T> {
-		random_el(): T;
+		random(): T;
 		shuffle(): void;
 		sum(): number,
 	}
@@ -65,7 +65,7 @@ Math.clamp = function (n: number, min: number, max: number): number {
 	return n;
 }
 
-Array.prototype.random_el = function () {
+Array.prototype.random = function () {
 	return this[Math.floor(Math.random() * this.length)];
 }
 

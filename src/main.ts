@@ -3,12 +3,14 @@ import Config from "./Config.ts";
 
 import { get_7tv_emotes } from "./apis/adamcy.ts";
 
+console.log(`Starting up on PID ${Deno.pid} and port ${Deno.env.get("PORT")!}`);
+
 async function main(): Promise<void> {
 	const config = new Config({
 		cmd_prefix: "$",
 		database_kind: "mongo",
 	})
-		.join_channels(["gkey", "pepega00000", "99sunrise"])
+		.join_channels(["gkey", "pepega00000"])
 		.enable_7tv_notifications()
 		.disregard_users([
 			"lovcen", "fossabot", "fightbot", "snusbot",
@@ -24,7 +26,7 @@ async function main(): Promise<void> {
 			requires_live: true,
 			channel_names: ["gkey"],
 			period: [2 * 60, 15 * 60],
-			execute: async () => `!showemote ${(await get_7tv_emotes("gkey")).unwrap().random_el().code}`,
+			execute: async () => `!showemote ${(await get_7tv_emotes("gkey")).unwrap().random().code}`,
 		})
 		// .add_cronjob({
 		// 	requires_live: true,

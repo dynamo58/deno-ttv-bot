@@ -76,7 +76,7 @@ export default class Bot {
 
 	async channel_info_loop_fetch(channel_idx: number) {
 		const r = await twitch.get_channel(this.cfg.twitch_info, this.cfg.channels[channel_idx].nickname);
-		if (r.status !== 200) { console.log(`Getting channel information for ${this.cfg.channels[channel_idx].nickname} about failed.`); return }
+		if (r.status !== 200) { console.log(`Getting channel information for ${this.cfg.channels[channel_idx].nickname} failed.`); return }
 		console.log(`Fetched info for channel ${this.cfg.channels[channel_idx].nickname}`);
 		const data = r.data!.data;
 
@@ -155,21 +155,21 @@ export default class Bot {
 			ctx.response.body = "Hello :)";
 		});
 
-		router.post("/notification", async (ctx) => {
-			console.log(ctx.request.body);
+		// router.post("/notification", async (ctx) => {
+		// 	console.log(ctx.request.body);
 
-			const body = ctx.request.body();
+		// 	const body = ctx.request.body();
 
-			if (body.type === "json") {
-				console.log(await body.value);
-				console.log("Sucessfully established EventSub webhooks");
-			}
+		// 	if (body.type === "json") {
+		// 		console.log(await body.value);
+		// 		console.log("Sucessfully established EventSub webhooks");
+		// 	}
 
 
-			// if (ctx.request.body.event) {
-			// console.log(req)
-			// }
-		});
+		// 	// if (ctx.request.body.event) {
+		// 	// console.log(req)
+		// 	// }
+		// });
 
 		const app = new Application();
 		app.use(router.routes());
@@ -297,10 +297,11 @@ export default class Bot {
 							c.send(`@${ctx.caller.nickname} ${res.output}` || "cmd failed");
 						if (res.system_commands)
 							for (const c of res.system_commands) eval(c);
+
+						console.log(`Ran ${ctx.cmd} in ${ircmsg.channel} by ${ircmsg.username}`);
 					}
 				}
 			}
-			console.log(`Ran ${ctx.cmd.toString()} in ${ircmsg.channel} by ${ircmsg.username}`);
 		}
 	}
 

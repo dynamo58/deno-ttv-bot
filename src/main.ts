@@ -3,7 +3,6 @@ import Config from "./Config.ts";
 
 import { get_7tv_emotes } from "./apis/adamcy.ts";
 
-console.log(`Starting up on PID ${Deno.pid} and port ${Deno.env.get("PORT")!}`);
 
 async function main(): Promise<void> {
 	const config = new Config({

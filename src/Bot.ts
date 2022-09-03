@@ -17,6 +17,7 @@ import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/we
 import { MongoClient, } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
 import * as db from "./db/db.ts";
 
+import Log from "./Log.ts";
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -76,8 +77,8 @@ export default class Bot {
 
 	async channel_info_loop_fetch(channel_idx: number) {
 		const r = await twitch.get_channel(this.cfg.twitch_info, this.cfg.channels[channel_idx].nickname);
-		if (r.status !== 200) { console.log(`Getting channel information for ${this.cfg.channels[channel_idx].nickname} failed.`); return }
-		console.log(`Fetched info for channel ${this.cfg.channels[channel_idx].nickname}`);
+		if (r.status !== 200) { Log.warn(`Getting channel information for ${this.cfg.channels[channel_idx].nickname} failed.`); return }
+		Log.info(`Fetched info for channel ${this.cfg.channels[channel_idx].nickname}`);
 		const data = r.data!.data;
 
 		if (data.length === 0) {
@@ -86,7 +87,7 @@ export default class Bot {
 				// channel just went offline
 				if (this.db_client) {
 					await db.save_stream_stats(this.db_client!, this.cfg.channels[channel_idx])
-					console.log(`Saved stream data after ${this.cfg.channels[channel_idx].nickname} ended their stream.`)
+					Log.info(`Saved stream data after ${this.cfg.channels[channel_idx].nickname} ended their stream.`)
 				}
 			}
 			this.cfg.channels[channel_idx].uptime_stats = null;
@@ -298,7 +299,7 @@ export default class Bot {
 						if (res.system_commands)
 							for (const c of res.system_commands) eval(c);
 
-						console.log(`Ran ${ctx.cmd} in ${ircmsg.channel} by ${ircmsg.username}`);
+						Log.info(`Ran ${ctx.cmd} in ${ircmsg.channel} by ${ircmsg.username}`);
 					}
 				}
 			}
@@ -358,36 +359,36 @@ export default class Bot {
 	}
 
 	async init_pubsub() {
-		const auth = await twitch.get_eventsub_accesstoken(this.cfg.twitch_info);
-		const ws: WebSocketClient = new StandardWebSocketClient("wss://pubsub-edge.twitch.tv");
+		// const auth = await twitch.get_eventsub_accesstoken(this.cfg.twitch_info);
+		// const ws: WebSocketClient = new StandardWebSocketClient("wss://pubsub-edge.twitch.tv");
 
-		ws.on("open", () => {
-			console.log(`Opened WebSocket connection with Twitch PubSub`);
+		// ws.on("open", () => {
+		// 	Log.success(`Opened WebSocket connection with Twitch PubSub`);
 
-			ws.send(JSON.stringify({ type: "PING" }));
-			setInterval(() => {
-				ws.send(JSON.stringify({ type: "PING" }));
-			}, 4 * 60 * 1000);
+		// 	ws.send(JSON.stringify({ type: "PING" }));
+		// 	setInterval(() => {
+		// 		ws.send(JSON.stringify({ type: "PING" }));
+		// 	}, 4 * 60 * 1000);
 
-			const listen_message = {
-				"type": "LISTEN",
-				"nonce": Deno.env.get("SECRET")!,
-				"data": {
-					"topics": [`channel-subscribe-events-v1.40295380`],
-					"auth_token": auth,
-				}
-			}
-			// console.log(listen_message)
+		// 	const listen_message = {
+		// 		"type": "LISTEN",
+		// 		"nonce": Deno.env.get("SECRET")!,
+		// 		"data": {
+		// 			"topics": [`channel-subscribe-events-v1.40295380`],
+		// 			"auth_token": auth,
+		// 		}
+		// 	}
+		// 	// console.log(listen_message)
 
-			ws.send(JSON.stringify(listen_message));
-		});
+		// 	ws.send(JSON.stringify(listen_message));
+		// });
 
-		ws.on("message", (msg) => {
-			console.log({ msg });
-			if (!(JSON.parse(msg.data).type === "PONG")) {
-				console.log("xd", JSON.parse(msg.data))
-			}
-		})
+		// ws.on("message", (msg) => {
+		// 	console.log({ msg });
+		// 	if (!(JSON.parse(msg.data).type === "PONG")) {
+		// 		console.log("xd", JSON.parse(msg.data))
+		// 	}
+		// })
 	}
 
 	// -------------------------------------------------------------------------
@@ -419,6 +420,7 @@ export default class Bot {
 	// -------------------------------------------------------------------------
 
 	async run() {
+		Log.success(`Starting up on PID ${Deno.pid} and port ${Deno.env.get("PORT")!}`);
 		this.cfg.startup_time = new Date();
 		await this.init_channels();
 		await this.cfg.client.connect();
@@ -427,7 +429,7 @@ export default class Bot {
 		this.cfg.channels.map((c, idx) => {
 			const channel_client = this.cfg.client.joinChannel(c.nickname);
 			this.listen_channel(channel_client, idx);
-			console.log(`Joined channel ${c.nickname}`);
+			Log.success(`Joined channel ${c.nickname}`);
 			setInterval(() => {
 				this.channel_info_loop_fetch(idx);
 			}, 2 * 60 * 1000)
@@ -438,7 +440,7 @@ export default class Bot {
 		if (this.cfg.database_kind === "mongo") {
 			const mongo = new MongoClient();
 			await mongo.connect(Deno.env.get("MONGODB_SRV")!)
-			console.log(`Successfully connected to MongoDB database`);
+			Log.success(`Successfully connected to MongoDB database`);
 			this.db_client = mongo;
 		}
 

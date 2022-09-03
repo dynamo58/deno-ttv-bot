@@ -18,6 +18,7 @@ import { MongoClient, } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
 import * as db from "./db/db.ts";
 
 import Log from "./Log.ts";
+import { bufferToUuidHexString } from "https://deno.land/x/web_bson@v0.2.4/src/uuid_utils.ts";
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -193,9 +194,10 @@ export default class Bot {
 					// }
 
 					this.handle_hooks(c, channel_idx, ircmsg);
-					this.handle_commands(c, ircmsg);
 					this.handle_pyramid(c, channel_idx, ircmsg);
+					this.handle_commands(c, ircmsg);
 					this.handle_reminders(c, ircmsg);
+					this.handle_lurker(c, ircmsg);
 					this.handle_stats(channel_idx, ircmsg);
 			}
 		}
@@ -204,6 +206,15 @@ export default class Bot {
 	// -------------------------------------------------------------------------
 	// handlers
 	// -------------------------------------------------------------------------
+
+	handle_lurker(c: Channel, ircmsg: IrcMessage) {
+		const user_id = parseInt(ircmsg.tags["user-id"])!;
+		const user_lurker = this.cfg.lurkers.get(user_id);
+		if (user_lurker) {
+			c.send(`${ircmsg.username} came back from ${user_lurker.message ?? "being AFK"} (${format_duration((new Date()).valueOf() - (new Date(user_lurker.start).valueOf()), false)} ago)`);
+			this.cfg.lurkers.delete(user_id);
+		}
+	}
 
 	handle_reminders(c: Channel, ircmsg: IrcMessage) {
 		const user_id = parseInt(ircmsg.tags["user-id"])!;

@@ -23,6 +23,7 @@ import Accage from "./commands/accage.ts";
 import Uptime from "./commands/uptime.ts";
 import Remind, { Reminder } from "./commands/remind.ts";
 import Kappa from "./commands/kappa.ts";
+import Lurk, { Lurker } from "./commands/lurk.ts";
 
 type DatabaseKind = undefined | "mongo";
 
@@ -46,6 +47,9 @@ export default class Config {
 	reminders: Map<number, Reminder[]>;
 	commands: Map<string, CommandModule>;
 	database_kind: DatabaseKind;
+	// lurkers - people that have explicitly proclaimed to be AFK in the chatroom
+	//           userId -> ...  
+	lurkers: Map<number, Lurker>;
 
 	constructor(cfg: IConfigConstructor) {
 		try {
@@ -59,6 +63,7 @@ export default class Config {
 			this.channels = [];
 			this.disregarded_users = [];
 			this.sudoers = [];
+			this.lurkers = new Map();
 			this.database_kind = cfg.database_kind;
 			this.loopback_address = null;
 			this.twitch_info = {
@@ -82,7 +87,9 @@ export default class Config {
 				["weather", Weather],
 				["accage", Accage],
 				["uptime", Uptime],
-				["kappa", Kappa]
+				["kappa", Kappa],
+				["lurk", Lurk],
+				["afk", Lurk],
 			])
 		} catch (e) {
 			throw e;

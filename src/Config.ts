@@ -5,7 +5,7 @@ import * as twitch from "./apis/twitch.ts";
 import * as seven_tv from "./apis/7tv.ts";
 
 import Hook from "./Hook.ts";
-import { TwitchInfo, TwitchChannel } from "./Bot.ts";
+import { Credentials, TwitchChannel } from "./Bot.ts";
 import CronJob, { ICronJobConstructor } from "./CronJob.ts";
 import { CommandModule } from "./Command.ts";
 
@@ -24,6 +24,8 @@ import Uptime from "./commands/uptime.ts";
 import Remind, { Reminder } from "./commands/remind.ts";
 import Kappa from "./commands/kappa.ts";
 import Lurk, { Lurker } from "./commands/lurk.ts";
+import Wolfram from "./commands/wolfram.ts";
+
 
 type DatabaseKind = undefined | "mongo";
 
@@ -34,7 +36,7 @@ interface IConfigConstructor {
 
 export default class Config {
 	client: TwitchChat;
-	twitch_info: TwitchInfo;
+	credentials: Credentials;
 	loopback_address: string | null;
 	// twitch user IDs of people with the `UserPrivilege.Sudo` status
 	sudoers: number[];
@@ -57,6 +59,7 @@ export default class Config {
 			const twitch_login = Deno.env.get("TWITCH_LOGIN")!;
 			const twitch_client_id = Deno.env.get("TWITCH_CLIENT_ID")!;
 			const twitch_client_secret = Deno.env.get("TWITCH_CLIENT_SECRET")!;
+			const wolfram_appid = Deno.env.get("WOLFRAMALPHA_APPID")!;
 
 			this.cmd_prefix = cfg.cmd_prefix ?? "!";
 			this.client = new TwitchChat(twitch_oauth, twitch_login);
@@ -66,11 +69,12 @@ export default class Config {
 			this.lurkers = new Map();
 			this.database_kind = cfg.database_kind;
 			this.loopback_address = null;
-			this.twitch_info = {
+			this.credentials = {
 				login: twitch_login,
 				oauth: twitch_oauth,
 				client_id: twitch_client_id,
 				client_secret: twitch_client_secret,
+				wolfram_appid,
 			};
 			this.startup_time = null;
 			this.cron_jobs = [];
@@ -90,6 +94,8 @@ export default class Config {
 				["kappa", Kappa],
 				["lurk", Lurk],
 				["afk", Lurk],
+				["wolfram", Wolfram],
+				["math", Wolfram],
 			])
 		} catch (e) {
 			throw e;
@@ -110,7 +116,7 @@ export default class Config {
 	}
 
 	async add_sudoers(sudoers: string[]): Promise<Config> {
-		const r = await twitch.id_from_nick(this.twitch_info, sudoers);
+		const r = await twitch.id_from_nick(this.credentials, sudoers);
 		if (r.status !== 200) throw new Error(`Some sudoer isn't real or Twitch bricked`);
 		const sudoer_ids = r.data!;
 

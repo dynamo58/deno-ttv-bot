@@ -1,9 +1,9 @@
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import * as twitch from "../apis/twitch.ts";
-import { TwitchInfo } from "../Bot.ts";
+import { Credentials } from "../Bot.ts";
 import { format_duration } from "../std_redeclarations.ts";
 
-const get_most_active_chatter_nickname = async (t: TwitchInfo, chatter_counts: Map<number, number>): Promise<[string, number] | null> => {
+const get_most_active_chatter_nickname = async (t: Credentials, chatter_counts: Map<number, number>): Promise<[string, number] | null> => {
 	let highest: null | [number, number] = null;
 
 	for (const c of chatter_counts)
@@ -30,7 +30,7 @@ const Stats: CommandModule = {
 		const games = ctx.channel.uptime_stats!.games_played.join(", ");
 		const lines = ctx.channel.uptime_stats!.messages_sent;
 		try {
-			const most_active_chatter = await get_most_active_chatter_nickname(ctx.twitch_info, ctx.channel.uptime_stats!.user_counts);
+			const most_active_chatter = await get_most_active_chatter_nickname(ctx.credentials, ctx.channel.uptime_stats!.user_counts);
 			const chatter_str = most_active_chatter === null ? "" : `| Most active chatter: ${most_active_chatter[0]} with ${most_active_chatter[1]} messages Chatting`;
 
 			return {

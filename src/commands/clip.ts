@@ -5,7 +5,7 @@ const Clip: CommandModule = {
 	sufficient_privilege: 0,
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
-		const r = await twitch.create_clip(ctx.twitch_info, ctx.channel.id);
+		const r = await twitch.create_clip(ctx.credentials, ctx.channel.id);
 		if (r.status !== 200) return {
 			is_success: false,
 			output: `something messed up ApuApustaja TeaTime`,

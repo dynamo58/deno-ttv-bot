@@ -18,7 +18,6 @@ import { MongoClient, } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
 import * as db from "./db/db.ts";
 
 import Log from "./Log.ts";
-import { bufferToUuidHexString } from "https://deno.land/x/web_bson@v0.2.4/src/uuid_utils.ts";
 
 export interface TwitchUserBasicInfo {
 	nickname: string,
@@ -60,11 +59,12 @@ export interface TwitchChannel extends TwitchUserBasicInfo {
 }
 
 // credentials used to access and interact with the Twitch API 
-export interface TwitchInfo {
+export interface Credentials {
 	login: string,
 	oauth: string,
 	client_id: string,
 	client_secret: string,
+	wolfram_appid: string,
 }
 
 export default class Bot {
@@ -77,7 +77,7 @@ export default class Bot {
 	}
 
 	async channel_info_loop_fetch(channel_idx: number) {
-		const r = await twitch.get_channel(this.cfg.twitch_info, this.cfg.channels[channel_idx].nickname);
+		const r = await twitch.get_channel(this.cfg.credentials, this.cfg.channels[channel_idx].nickname);
 		if (r.status !== 200) { Log.warn(`Getting channel information for ${this.cfg.channels[channel_idx].nickname} failed.`); return }
 		Log.info(`Fetched info for channel ${this.cfg.channels[channel_idx].nickname}`);
 		const data = r.data!.data;
@@ -113,14 +113,14 @@ export default class Bot {
 
 	async init_channels() {
 		for (const [idx, c] of this.cfg.channels.entries()) {
-			const res = await twitch.get_channel(this.cfg.twitch_info, c.nickname);
+			const res = await twitch.get_channel(this.cfg.credentials, c.nickname);
 			if (res.status !== 200) throw new Error(`Failed to get initiate channel ${c.nickname}`);
 			const channel = res.data!;
 
 			// if channel is not live
 			if (channel.data.length === 0) {
 				try {
-					const res = await twitch.id_from_nick(this.cfg.twitch_info, [c.nickname]);
+					const res = await twitch.id_from_nick(this.cfg.credentials, [c.nickname]);
 					if (res.status !== 200) throw new Error(`Failed to get initiate channel ${c.nickname}`);
 					const channel_id = res.data![0];
 					this.cfg.channels[idx] = { ...c, id: channel_id, nickname: c.nickname.toLowerCase() };
@@ -370,7 +370,7 @@ export default class Bot {
 	}
 
 	async init_pubsub() {
-		// const auth = await twitch.get_eventsub_accesstoken(this.cfg.twitch_info);
+		// const auth = await twitch.get_eventsub_accesstoken(this.cfg.credentials);
 		// const ws: WebSocketClient = new StandardWebSocketClient("wss://pubsub-edge.twitch.tv");
 
 		// ws.on("open", () => {
@@ -458,7 +458,7 @@ export default class Bot {
 		this.start_cronjobs();
 		// this.cfg.loopback_address = await this.get_loopback_address();
 		// this.init_pubsub();
-		// await twitch.request_eventsub_subscription(this.twitch_info, this.loopback_address!, 40295380);
+		// await twitch.request_eventsub_subscription(this.credentials, this.loopback_address!, 40295380);
 	}
 }
 

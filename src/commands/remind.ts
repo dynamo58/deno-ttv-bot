@@ -15,7 +15,7 @@ const Remind: CommandModule = {
 		const kwargs = ctx.kwargs();
 		let target_user_id;
 		if (kwargs.get("user")) {
-			const res = await twitch.id_from_nick(ctx.twitch_info, [kwargs.get("user")!]);
+			const res = await twitch.id_from_nick(ctx.credentials, [kwargs.get("user")!]);
 			if (res.status !== 200) return { is_success: false, output: `something went wrong FeelsDankMan TeaTime (external error).` }
 			if (res.data!.length !== 1) return { is_success: false, output: `that user doesn't exist.` }
 

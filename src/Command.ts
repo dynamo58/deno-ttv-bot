@@ -4,7 +4,7 @@ interface ActualTags extends Tags {
 	// but the actual constructed interface has it...
 	badges: string,
 }
-import { TwitchChannel, TwitchInfo, TwitchUserBasicInfo } from "./Bot.ts";
+import { TwitchChannel, Credentials, TwitchUserBasicInfo } from "./Bot.ts";
 import Config from "./Config.ts";
 
 export enum UserPrivilege {
@@ -25,7 +25,7 @@ export class CommandContext {
 	highest_priv: UserPrivilege;
 	args: string[];
 	channel: TwitchChannel;
-	twitch_info: TwitchInfo;
+	credentials: Credentials;
 	startup_time: Date;
 	caller: TwitchUserBasicInfo;
 	sudoers: number[];
@@ -91,7 +91,7 @@ export class CommandContext {
 
 		this.highest_priv = this.get_highest_privilege((ircmsg.tags as ActualTags).badges);
 		this.channel = cfg.channels.filter(c => c.nickname === ircmsg.channel.slice(1))[0];
-		this.twitch_info = cfg.twitch_info;
+		this.credentials = cfg.credentials;
 		this.startup_time = cfg.startup_time!;
 		this.caller = { nickname: ircmsg.username, id: parseInt(ircmsg.tags["user-id"]) };
 		this.sudoers = cfg.sudoers;

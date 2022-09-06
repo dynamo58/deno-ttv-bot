@@ -24,11 +24,6 @@ async function main(): Promise<void> {
 			"streamelements", "schnozebot", "thepositiveBot",
 			"kattahbot", "anotherttvviewer", "streamlabs", "moobot",
 		])
-		.add_hook("gkey", {
-			nickname_criterion: "fossabot",
-			substring_criterion: "just resubscribed",
-			execute: () => "welcome back to the g spot gQueen",
-		})
 		.add_cronjob({
 			requires_live: true,
 			channel_names: ["gkey"],

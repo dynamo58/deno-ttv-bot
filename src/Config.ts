@@ -26,7 +26,7 @@ import Remind, { Reminder } from "./commands/remind.ts";
 import Kappa from "./commands/kappa.ts";
 import Lurk, { Lurker } from "./commands/lurk.ts";
 import Wolfram from "./commands/wolfram.ts";
-
+import Coinflip from "./commands/coinflip.ts";
 
 type DatabaseKind = undefined | "mongo";
 
@@ -109,6 +109,8 @@ export default class Config {
 				["afk", Lurk],
 				["wolfram", Wolfram],
 				["math", Wolfram],
+				["cf", Coinflip],
+				["coinflip", Coinflip],
 			])
 		} catch (e) {
 			throw e;

@@ -81,10 +81,11 @@ export default class Bot {
 		this.cfg = cfg;
 	}
 
+	// I was supposed to render this fn deprecated, but turns out the eventapi has some really stupid limitations,
+	// so there we are, still
 	async channel_info_loop_fetch(channel_idx: number) {
 		const r = await twitch.get_channel(this.cfg.credentials, this.cfg.channels[channel_idx].nickname);
 		if (r.status !== 200) { Log.warn(`Getting channel information for ${this.cfg.channels[channel_idx].nickname} failed.`); return }
-		Log.info(`Fetched info for channel ${this.cfg.channels[channel_idx].nickname}`);
 		const data = r.data!.data;
 
 		if (data.length === 0) {

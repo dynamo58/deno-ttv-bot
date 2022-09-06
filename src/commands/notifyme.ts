@@ -28,7 +28,6 @@ const NotifyMe: CommandModule = {
 				break;
 			default:
 				return { is_success: false, output: `unsupported "when" clause. See the usage command ApuApustaja` };
-
 		}
 
 		throw new Error("UNREACHABLE");

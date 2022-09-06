@@ -158,7 +158,16 @@ export default class Config {
 
 	join_channels(channels: IJoinChannel[]): Config {
 		for (const { name, subscribe_message, resubscribe_message, has_eventsub } of channels)
-			this.channels.push({ nickname: name.toLowerCase(), id: 0, uptime_stats: null, hooks: [], pyramid_tracker: { count: 0, is_ascending: true }, resubscribe_message, subscribe_message, has_eventsub: has_eventsub ?? false });
+			this.channels.push({
+				nickname: name.toLowerCase(),
+				id: 0,
+				uptime_stats: null,
+				hooks: [],
+				pyramid_tracker: { count: 0, is_ascending: true },
+				resubscribe_message,
+				subscribe_message,
+				has_eventsub: has_eventsub ?? false
+			});
 		return this;
 	}
 
@@ -188,37 +197,39 @@ export default class Config {
 			.then(users => {
 				// the 7tv API is just fucked... I would never make it this wasteful
 				// if it wasn't for that reason
-				users.unwrap().forEach((u, idx) => {
-					const ws = new WebSocket('wss://events.7tv.io/v3');
-					ws.addEventListener('open', function open() {
-						ws.send(JSON.stringify({
-							op: 35,
-							d: {
-								type: "emote_set.update",
-								condition: {
-									object_id: u.id,
+				if (users.status === 200) {
+					users.data!.forEach((u, idx) => {
+						const ws = new WebSocket('wss://events.7tv.io/v3');
+						ws.addEventListener('open', function open() {
+							ws.send(JSON.stringify({
+								op: 35,
+								d: {
+									type: "emote_set.update",
+									condition: {
+										object_id: u.id,
+									}
+								}
+							}))
+						});
+
+						ws.addEventListener('message', (data) => {
+							const d = JSON.parse(data.data).d;
+
+							if (d.body) {
+								const client = this.channels[idx].client;
+								if (d.body.pulled) { // an emote was removed
+									const emote_name = d.body.pulled[0].old_value.name;
+									if (client) client.send(`7tvM an emote was removed: ${emote_name}`);
+								}
+
+								if (d.body.pushed) { // an emote was added
+									const emote_name = d.body.pushed[0].value.name;
+									if (client) client.send(`7tvM new emote added: ${emote_name}`);
 								}
 							}
-						}))
+						});
 					});
-
-					ws.addEventListener('message', (data) => {
-						const d = JSON.parse(data.data).d;
-
-						if (d.body) {
-							const client = this.channels[idx].client;
-							if (d.body.pulled) { // an emote was removed
-								const emote_name = d.body.pulled[0].old_value.name;
-								if (client) client.send(`7tvM an emote was removed: ${emote_name}`);
-							}
-
-							if (d.body.pushed) { // an emote was added
-								const emote_name = d.body.pushed[0].value.name;
-								if (client) client.send(`7tvM new emote added: ${emote_name}`);
-							}
-						}
-					});
-				});
+				}
 			});
 
 		return this;

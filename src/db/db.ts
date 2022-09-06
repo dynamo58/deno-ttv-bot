@@ -19,17 +19,11 @@ export async function save_stream_stats(db_client: MongoClient, channel: TwitchC
 	await db_stats.insertOne(stats);
 }
 
-
 enum AddUserAsLiveNotifSubscriberRes {
 	UserAdded = 200,
 	UserAlreadySubscribes = 400,
 	UnknownError = 500,
 }
-
-const client = new MongoClient();
-await client.connect(
-	"mongodb+srv://sailorfirex:NJJ5Nc52urU7mvxf@lovcencluster.vxbhumr.mongodb.net?authMechanism=SCRAM-SHA-1",
-);
 
 // TODO: error-proof this
 export async function get_channel_live_notif_subscribers(db_client: MongoClient, channel_id: number): Promise<TwitchUserBasicInfo[]> {
@@ -63,6 +57,3 @@ export async function add_user_as_live_notif_subscriber(db_client: MongoClient, 
 		return 200;
 	} catch (e) { console.log(e); return 500 }
 }
-
-// console.log(await add_user_as_live_notif_subscriber(client, 40295380, { nickname: "pepega00000", id: 149355320 }));
-console.log(await add_user_as_live_notif_subscriber(client, 40295380, { nickname: "aRandomFinn", id: 85826918 }));

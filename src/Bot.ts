@@ -139,6 +139,7 @@ export default class Bot {
 
 			// if channel is live
 			this.cfg.channels[idx] = {
+				...c,
 				nickname: c.nickname.toLowerCase(),
 				id: parseInt(channel.data[0].user_id),
 				uptime_stats: {
@@ -147,7 +148,6 @@ export default class Bot {
 					startup_time: new Date(channel.data[0].started_at),
 					user_counts: new Map<number, number>()
 				},
-				hooks: c.hooks,
 				pyramid_tracker: { count: 0, is_ascending: true },
 				has_eventsub: false,
 			}
@@ -170,7 +170,7 @@ export default class Bot {
 					this.handle_reminders(c, ircmsg);
 					this.handle_lurker(c, ircmsg);
 					this.handle_stats(channel_idx, ircmsg);
-					break;
+					continue;
 				case "USERNOTICE":
 					// do all the checks that come after USERNOTICES (people subscribing and what not)
 					this.handle_usernotice(c, channel_idx, ircmsg);
@@ -182,14 +182,20 @@ export default class Bot {
 	// handlers
 	// -------------------------------------------------------------------------
 
+
 	handle_usernotice(c: Channel, channel_idx: number, ircmsg: IrcMessage) {
 		const tags = ircmsg.tags as ActualTags;
-		if (tags["system-msg"] && tags["system-msg"].includes("subscribed"))
+		if (tags["system-msg"] && tags["system-msg"].includes("subscribed")) {
+
 			// const c = this.cfg.channels.filter(c => c.id === 149355320)[0].client!; // test test testing
-			if (tags["system-msg"].includes("They've") && this.cfg.channels[channel_idx].resubscribe_message)
+			if (tags["system-msg"].includes("They've") && this.cfg.channels[channel_idx].resubscribe_message) {
 				c.send(this.cfg.channels[channel_idx].resubscribe_message!.replace("{{ NAME }}", ircmsg.tags["display-name"]))
-			else if (this.cfg.channels[channel_idx].subscribe_message)
+			}
+			else if (tags["system-msg"].includes("subscribed") && this.cfg.channels[channel_idx].subscribe_message) {
 				c.send(this.cfg.channels[channel_idx].subscribe_message!.replace("{{ NAME }}", ircmsg.tags["display-name"]))
+			}
+		}
+
 	}
 
 	handle_lurker(c: Channel, ircmsg: IrcMessage) {

@@ -8,11 +8,11 @@ import { CommandContext, ircmsg_is_command_fmt } from "./Command.ts";
 import Hook, { validate_hook } from "./Hook.ts";
 import Config from "./Config.ts";
 import { Reminder } from "./commands/remind.ts";
+import { ActualTags } from "./Command.ts";
 
 import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 import { Ngrok } from "https://deno.land/x/ngrok@4.0.1/mod.ts";
 import { sleep } from "https://deno.land/x/sleep@v1.2.1/mod.ts";
-import { WebSocketClient, StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
 
 import { MongoClient, } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
 import * as db from "./db/db.ts";
@@ -55,7 +55,10 @@ export interface TwitchChannel extends TwitchUserBasicInfo {
 		count: number,
 		max_count?: number,
 		is_ascending: boolean,
-	}
+	},
+	subscribe_message?: string,
+	resubscribe_message?: string,
+	has_eventsub: boolean,
 }
 
 // credentials used to access and interact with the Twitch API 
@@ -63,8 +66,10 @@ export interface Credentials {
 	login: string,
 	oauth: string,
 	client_id: string,
-	client_secret: string,
 	wolfram_appid: string,
+	app_client_id: string,
+	app_secret: string,
+	secret: string,
 }
 
 export default class Bot {
@@ -142,7 +147,8 @@ export default class Bot {
 					user_counts: new Map<number, number>()
 				},
 				hooks: c.hooks,
-				pyramid_tracker: { count: 0, is_ascending: true }
+				pyramid_tracker: { count: 0, is_ascending: true },
+				has_eventsub: false,
 			}
 		}
 	}
@@ -151,54 +157,22 @@ export default class Bot {
 	// listeners
 	// -------------------------------------------------------------------------
 
-	listen_local() {
-		const router = new Router();
-		router.get("/", (ctx) => {
-			ctx.response.body = "Hello :)";
-		});
-
-		// router.post("/notification", async (ctx) => {
-		// 	console.log(ctx.request.body);
-
-		// 	const body = ctx.request.body();
-
-		// 	if (body.type === "json") {
-		// 		console.log(await body.value);
-		// 		console.log("Sucessfully established EventSub webhooks");
-		// 	}
-
-
-		// 	// if (ctx.request.body.event) {
-		// 	// console.log(req)
-		// 	// }
-		// });
-
-		const app = new Application();
-		app.use(router.routes());
-		app.use(router.allowedMethods());
-
-		app.listen({ port: parseInt(Deno.env.get("PORT")!) });
-	}
-
 	async listen_channel(c: Channel, channel_idx: number) {
 		for await (const ircmsg of c) {
+			if (this.cfg.disregarded_users.includes(ircmsg.username)) continue;
 			switch (ircmsg.command) {
 				case "PRIVMSG":
-					if (this.cfg.disregarded_users.includes(ircmsg.username)) continue;
-
-					// just some tests
-					// if (ircmsg.username === "pepega00000" && ircmsg.message === "test") {
-					// 	console.log("Xd")
-					// 	await db.save_stream_stats(this.db_client!, this.cfg.channels[2]);
-					// 	console.log("Xd11")
-					// }
-
+					// do all the checks that come after a normal chat message
 					this.handle_hooks(c, channel_idx, ircmsg);
 					this.handle_pyramid(c, channel_idx, ircmsg);
 					this.handle_commands(c, ircmsg);
 					this.handle_reminders(c, ircmsg);
 					this.handle_lurker(c, ircmsg);
 					this.handle_stats(channel_idx, ircmsg);
+					break;
+				case "USERNOTICE":
+					// do all the checks that come after USERNOTICES (people subscribing and what not)
+					this.handle_usernotice(c, channel_idx, ircmsg);
 			}
 		}
 	}
@@ -206,6 +180,16 @@ export default class Bot {
 	// -------------------------------------------------------------------------
 	// handlers
 	// -------------------------------------------------------------------------
+
+	handle_usernotice(c: Channel, channel_idx: number, ircmsg: IrcMessage) {
+		const tags = ircmsg.tags as ActualTags;
+		if (tags["system-msg"] && tags["system-msg"].includes("subscribed"))
+			// const c = this.cfg.channels.filter(c => c.id === 149355320)[0].client!; // test test testing
+			if (tags["system-msg"].includes("They've") && this.cfg.channels[channel_idx].resubscribe_message)
+				c.send(this.cfg.channels[channel_idx].resubscribe_message!.replace("{{ NAME }}", ircmsg.tags["display-name"]))
+			else if (this.cfg.channels[channel_idx].subscribe_message)
+				c.send(this.cfg.channels[channel_idx].subscribe_message!.replace("{{ NAME }}", ircmsg.tags["display-name"]))
+	}
 
 	handle_lurker(c: Channel, ircmsg: IrcMessage) {
 		const user_id = parseInt(ircmsg.tags["user-id"])!;
@@ -342,8 +326,65 @@ export default class Bot {
 	}
 
 	// -------------------------------------------------------------------------
-	// pubsub & eventsub
+	// eventsub
 	// -------------------------------------------------------------------------
+
+	async init_eventsub() {
+		this.cfg.loopback_address = await this.get_loopback_address();
+
+		const router = new Router();
+		router.get("/", (ctx) => {
+			ctx.response.body = "Hello :)";
+		});
+
+		router.post('/webhooks/:channel_user_id/eventsub', async (ctx) => {
+			const body = ctx.request.body();
+
+			if (body.type === "json") {
+				const data = await body.value;
+
+				if (data.challenge)
+					ctx.response.body = data.challenge;
+
+				if (data.event) {
+					const channel_idx = this.cfg.get_channel_idx_by_id(parseInt(ctx.params.channel_user_id))!;
+					switch (data.subscription.type) {
+						case "channel.update":
+							if (this.cfg.channels[channel_idx].uptime_stats)
+								if (this.cfg.channels[channel_idx].uptime_stats!.games_played.includes(data.event.category_name))
+									this.cfg.channels[channel_idx].uptime_stats!.games_played.push(data.event.category_name);
+							break;
+						// deno-lint-ignore no-case-declarations
+						case "stream.online":
+							const r = await twitch.get_channel(this.cfg.credentials, this.cfg.channels[channel_idx].nickname);
+							if (r.status !== 200) { Log.warn(`Getting channel information for ${this.cfg.channels[channel_idx].nickname} failed.`); return }
+
+							this.cfg.channels[channel_idx].uptime_stats = {
+								messages_sent: 0,
+								games_played: [r.data!.data[0].game_name],
+								startup_time: new Date(),
+								user_counts: new Map(),
+							}
+							break;
+						case "stream.offline":
+							await db.save_stream_stats(this.db_client!, this.cfg.channels[channel_idx]);
+							this.cfg.channels[channel_idx].uptime_stats = null;
+					}
+				}
+			}
+		});
+
+		const app = new Application();
+		app.use(router.routes());
+		app.use(router.allowedMethods());
+
+		app.listen({ port: parseInt(Deno.env.get("PORT")!) });
+
+		const access_token = (await twitch.get_eventsub_accesstoken(this.cfg.credentials)).unwrap();
+		for (const c of this.cfg.channels.filter(c => c.has_eventsub))
+			for (const sub_type of ["channel.update", "stream.online", "stream.offline"])
+				await twitch.request_eventsub_subscription(this.cfg.credentials, this.cfg.loopback_address, access_token, c.id, sub_type);
+	}
 
 	async get_loopback_address(): Promise<string> {
 		if (Deno.env.get("LOCAL")) {
@@ -362,44 +403,12 @@ export default class Bot {
 				await sleep(0.1);
 			}
 
-			console.log(`Got ngrok tunnel address`);
+			Log.success(`Got ngrok tunnel address`);
 			return loopback!;
 
 		} else
-			return "DEPLOY_URL";
-	}
-
-	async init_pubsub() {
-		// const auth = await twitch.get_eventsub_accesstoken(this.cfg.credentials);
-		// const ws: WebSocketClient = new StandardWebSocketClient("wss://pubsub-edge.twitch.tv");
-
-		// ws.on("open", () => {
-		// 	Log.success(`Opened WebSocket connection with Twitch PubSub`);
-
-		// 	ws.send(JSON.stringify({ type: "PING" }));
-		// 	setInterval(() => {
-		// 		ws.send(JSON.stringify({ type: "PING" }));
-		// 	}, 4 * 60 * 1000);
-
-		// 	const listen_message = {
-		// 		"type": "LISTEN",
-		// 		"nonce": Deno.env.get("SECRET")!,
-		// 		"data": {
-		// 			"topics": [`channel-subscribe-events-v1.40295380`],
-		// 			"auth_token": auth,
-		// 		}
-		// 	}
-		// 	// console.log(listen_message)
-
-		// 	ws.send(JSON.stringify(listen_message));
-		// });
-
-		// ws.on("message", (msg) => {
-		// 	console.log({ msg });
-		// 	if (!(JSON.parse(msg.data).type === "PONG")) {
-		// 		console.log("xd", JSON.parse(msg.data))
-		// 	}
-		// })
+			throw new Error("Insert deploy URL here");
+		// return "TODO";
 	}
 
 	// -------------------------------------------------------------------------
@@ -435,16 +444,15 @@ export default class Bot {
 		this.cfg.startup_time = new Date();
 		await this.init_channels();
 		await this.cfg.client.connect();
-		this.listen_local();
 
-		this.cfg.channels.map((c, idx) => {
+		this.cfg.channels.forEach((c, idx) => {
 			const channel_client = this.cfg.client.joinChannel(c.nickname);
 			this.listen_channel(channel_client, idx);
 			Log.success(`Joined channel ${c.nickname}`);
-			setInterval(() => {
-				this.channel_info_loop_fetch(idx);
-			}, 2 * 60 * 1000)
-
+			if (!c.has_eventsub)
+				setInterval(() => {
+					this.channel_info_loop_fetch(idx);
+				}, 2 * 60 * 1000)
 			this.cfg.channels[idx].client = channel_client;
 		});
 
@@ -456,9 +464,7 @@ export default class Bot {
 		}
 
 		this.start_cronjobs();
-		// this.cfg.loopback_address = await this.get_loopback_address();
-		// this.init_pubsub();
-		// await twitch.request_eventsub_subscription(this.credentials, this.loopback_address!, 40295380);
+		this.init_eventsub();
 	}
 }
 

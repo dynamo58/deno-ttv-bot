@@ -1,8 +1,9 @@
 import { IrcMessage, Tags } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
-interface ActualTags extends Tags {
+export interface ActualTags extends Tags {
 	// for some reason this property is missing in the interface of the API
 	// but the actual constructed interface has it...
 	badges: string,
+	"system-msg": string | undefined,
 }
 import { TwitchChannel, Credentials, TwitchUserBasicInfo } from "./Bot.ts";
 import Config from "./Config.ts";

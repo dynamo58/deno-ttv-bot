@@ -1,5 +1,6 @@
 import { TwitchChat } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
+import { createHash } from "https://deno.land/std@0.77.0/hash/mod.ts";
 
 import * as twitch from "./apis/twitch.ts";
 import * as seven_tv from "./apis/7tv.ts";
@@ -34,6 +35,13 @@ interface IConfigConstructor {
 	database_kind: DatabaseKind,
 }
 
+interface IJoinChannel {
+	name: string,
+	subscribe_message?: string,
+	resubscribe_message?: string,
+	has_eventsub?: boolean
+}
+
 export default class Config {
 	client: TwitchChat;
 	credentials: Credentials;
@@ -58,8 +66,11 @@ export default class Config {
 			const twitch_oauth = Deno.env.get("TWITCH_OAUTH")!;
 			const twitch_login = Deno.env.get("TWITCH_LOGIN")!;
 			const twitch_client_id = Deno.env.get("TWITCH_CLIENT_ID")!;
-			const twitch_client_secret = Deno.env.get("TWITCH_CLIENT_SECRET")!;
+			const twitch_app_client_id = Deno.env.get("TWITCH_APP_CLIENT_ID")!;
+			const twitch_app_client_secret = Deno.env.get("TWITCH_APP_SECRET")!;
 			const wolfram_appid = Deno.env.get("WOLFRAMALPHA_APPID")!;
+			// If no secret is provided, that is OK
+			const secret = Deno.env.get("SECRET") ?? createHash("sha1").toString();
 
 			this.cmd_prefix = cfg.cmd_prefix ?? "!";
 			this.client = new TwitchChat(twitch_oauth, twitch_login);
@@ -73,7 +84,9 @@ export default class Config {
 				login: twitch_login,
 				oauth: twitch_oauth,
 				client_id: twitch_client_id,
-				client_secret: twitch_client_secret,
+				app_client_id: twitch_app_client_id,
+				app_secret: twitch_app_client_secret,
+				secret,
 				wolfram_appid,
 			};
 			this.startup_time = null;
@@ -106,9 +119,16 @@ export default class Config {
 		return Array.from(this.commands.keys());
 	}
 
+	get_channel_idx_by_id(user_id: number): number | null {
+		for (const [i, c] of this.channels.entries())
+			if (c.id === user_id) return i;
+
+		return null;
+	}
+
 	// -------------------------------------------------------------------------
 	// builder pattern methods
-	// ------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 
 	add_cronjob(c: ICronJobConstructor): Config {
 		this.cron_jobs.push(new CronJob(c));
@@ -131,10 +151,9 @@ export default class Config {
 		return this;
 	}
 
-	join_channels(channels: string[]): Config {
-		channels = channels.map(c => c.toLowerCase());
-		for (const c of channels)
-			this.channels.push({ nickname: c, id: 0, uptime_stats: null, hooks: [], pyramid_tracker: { count: 0, is_ascending: true } });
+	join_channels(channels: IJoinChannel[]): Config {
+		for (const { name, subscribe_message, resubscribe_message, has_eventsub } of channels)
+			this.channels.push({ nickname: name.toLowerCase(), id: 0, uptime_stats: null, hooks: [], pyramid_tracker: { count: 0, is_ascending: true }, resubscribe_message, subscribe_message, has_eventsub: has_eventsub ?? false });
 		return this;
 	}
 

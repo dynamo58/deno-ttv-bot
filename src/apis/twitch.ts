@@ -1,4 +1,5 @@
 import { Credentials } from "../Bot.ts";
+import Log from "../Log.ts";
 import { CreateClip, HelixChannel, HelixUsers, TmiChatters, HelixUsersData } from "./twitch.d.ts";
 import { APICallResult } from "./_api.ts";
 
@@ -58,7 +59,8 @@ export async function get_channel(t: Credentials, nick: string): Promise<APICall
 
 export async function get_eventsub_accesstoken(_t: Credentials): Promise<APICallResult<string>> {
 	try {
-		const r = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${Deno.env.get("TWITCH_APP_CLIENT_ID")!}&client_secret=${Deno.env.get("TWITCH_APP_SECRET")!}&grant_type=client_credentials`, {
+		const scope = encodeURI("channel:read:subscriptions");
+		const r = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${_t.app_client_id}&client_secret=${_t.app_secret}&grant_type=client_credentials&scope=${scope}`, {
 			method: "POST"
 		});
 
@@ -66,34 +68,37 @@ export async function get_eventsub_accesstoken(_t: Credentials): Promise<APICall
 	} catch { return new APICallResult(500) }
 }
 
-// deno-lint-ignore require-await no-unused-vars
-export async function request_eventsub_subscription(t: Credentials, loopback_url: string, user_id: number) {
-	throw new Error("TODO");
-	// try {
+export async function request_eventsub_subscription(t: Credentials, loopback_url: string, access_token: string, user_id: number, sub_type: string) {
 
-	// } catch { return new APICallResult(500) }
+	const r = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
+		method: "POST",
+		headers: {
+			'Content-Type': 'application/json',
+			'Client-ID': t.app_client_id,
+			'Authorization': 'Bearer ' + access_token
+		},
+		body: JSON.stringify({
+			"type": sub_type,
+			"version": "1",
+			"condition": {
+				"broadcaster_user_id": user_id.toString()
+			},
+			"transport": {
+				"method": "webhook",
+				"callback": `https://${loopback_url}/webhooks/${user_id}/eventsub`,
+				"secret": t.secret
+			}
+		}),
+	});
 
-	// const access_token = await get_eventsub_accesstoken(t);
-
-	// const r = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
-	// headers: {
-	// 'Content-Type': 'application/json',
-	// 'Client-ID': t.client_id,
-	// 'Authorization': 'Bearer ' + access_token
-	// },
-	// body: JSON.stringify({
-	// "type": "channel.subscribe",
-	// "version": "1",
-	// "condition": {
-	// "broadcaster_user_id": user_id
-	// },
-	// "transport": {
-	// "method": "webhook",
-	// "callback": loopback_url + '/notification',
-	// "secret": Deno.env.get("SECRET")!
-	// }
-	// }),
-	// });
+	const json = await r.json();
+	if (json.data) if (json.data.length > 0) {
+		Log.success(`Sucessfully established ${sub_type} EventSub webhook`);
+		return
+	}
+	Log.warn(JSON.stringify(json));
+	Log.error(`Failed to get EventSub`);
+	Deno.exit(1);
 }
 
 export async function get_chatters(channel_name: string): Promise<APICallResult<TmiChatters>> {

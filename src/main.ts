@@ -9,7 +9,15 @@ async function main(): Promise<void> {
 		cmd_prefix: "$",
 		database_kind: "mongo",
 	})
-		.join_channels(["gkey", "pepega00000"])
+		.join_channels([{
+			name: "gkey",
+			has_eventsub: true, // max 1 channel can have it cuz reasons
+			subscribe_message: "@{{ NAME }} welcome to the G spot flushE",
+			resubscribe_message: "@{{ NAME }} welcome back to the G spot flushE",
+		},
+		{
+			name: "pepega00000",
+		}])
 		.enable_7tv_notifications()
 		.disregard_users([
 			"lovcen", "fossabot", "fightbot", "snusbot",

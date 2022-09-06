@@ -1,7 +1,7 @@
-import { TwitchChannel } from "../Bot.ts";
+import { TwitchChannel, TwitchUserBasicInfo } from "../Bot.ts";
 import { MongoClient } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
 
-import { StreamStats } from "./schemas.ts";
+import { StreamStats, OnlineNotificationSubscribers } from "./schemas.ts";
 
 export async function save_stream_stats(db_client: MongoClient, channel: TwitchChannel) {
 	const db = db_client.database("data");
@@ -18,3 +18,51 @@ export async function save_stream_stats(db_client: MongoClient, channel: TwitchC
 
 	await db_stats.insertOne(stats);
 }
+
+
+enum AddUserAsLiveNotifSubscriberRes {
+	UserAdded = 200,
+	UserAlreadySubscribes = 400,
+	UnknownError = 500,
+}
+
+const client = new MongoClient();
+await client.connect(
+	"mongodb+srv://sailorfirex:NJJ5Nc52urU7mvxf@lovcencluster.vxbhumr.mongodb.net?authMechanism=SCRAM-SHA-1",
+);
+
+// TODO: error-proof this
+export async function get_channel_live_notif_subscribers(db_client: MongoClient, channel_id: number): Promise<TwitchUserBasicInfo[]> {
+	const db = db_client.database("data");
+	const db_notifs = db.collection<OnlineNotificationSubscribers>("live_notif_subscribers");
+
+	const curr = await db_notifs.findOne({ channel_id });
+
+	return curr?.subscribers ?? [];
+}
+
+export async function add_user_as_live_notif_subscriber(db_client: MongoClient, channel_id: number, user: TwitchUserBasicInfo): Promise<AddUserAsLiveNotifSubscriberRes> {
+	try {
+		const db = db_client.database("data");
+		const db_notifs = db.collection<OnlineNotificationSubscribers>("live_notif_subscribers");
+
+		const curr = await db_notifs.findOne({ channel_id });
+
+		if (!curr) {
+			await db_notifs.insertOne({ channel_id, subscribers: [user] });
+			return 200;
+		}
+		const u = curr!.subscribers.filter(u => u.id === user.id);
+		if (u.length > 0) return 400;
+
+		db_notifs.updateOne(
+			{ channel_id },
+			{ $set: { subscribers: [...curr!.subscribers, user] } }
+		)
+
+		return 200;
+	} catch (e) { console.log(e); return 500 }
+}
+
+// console.log(await add_user_as_live_notif_subscriber(client, 40295380, { nickname: "pepega00000", id: 149355320 }));
+console.log(await add_user_as_live_notif_subscriber(client, 40295380, { nickname: "aRandomFinn", id: 85826918 }));

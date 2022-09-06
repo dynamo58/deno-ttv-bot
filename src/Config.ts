@@ -27,6 +27,7 @@ import Kappa from "./commands/kappa.ts";
 import Lurk, { Lurker } from "./commands/lurk.ts";
 import Wolfram from "./commands/wolfram.ts";
 import Coinflip from "./commands/coinflip.ts";
+import NotifyMe from "./commands/notifyme.ts";
 
 type DatabaseKind = undefined | "mongo";
 
@@ -70,6 +71,7 @@ export default class Config {
 			const twitch_app_client_secret = Deno.env.get("TWITCH_APP_SECRET")!;
 			const wolfram_appid = Deno.env.get("WOLFRAMALPHA_APPID")!;
 			// If no secret is provided, that is OK
+			// ... actually it is preferred that way
 			const secret = Deno.env.get("SECRET") ?? createHash("sha1").toString();
 
 			this.cmd_prefix = cfg.cmd_prefix ?? "!";
@@ -111,6 +113,7 @@ export default class Config {
 				["math", Wolfram],
 				["cf", Coinflip],
 				["coinflip", Coinflip],
+				["notifyme", NotifyMe]
 			])
 		} catch (e) {
 			throw e;

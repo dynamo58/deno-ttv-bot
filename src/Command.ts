@@ -1,3 +1,4 @@
+import { MongoClient } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
 import { IrcMessage, Tags } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 export interface ActualTags extends Tags {
 	// for some reason this property is missing in the interface of the API
@@ -31,6 +32,7 @@ export class CommandContext {
 	caller: TwitchUserBasicInfo;
 	sudoers: number[];
 	all_commands: string[];
+	db_client: MongoClient;
 
 	// get a map of keyword arguments
 	// allowed delimiters: (none), '', "",
@@ -82,7 +84,7 @@ export class CommandContext {
 		return UserPrivilege.None;
 	}
 
-	constructor(ircmsg: IrcMessage, cfg: Config) {
+	constructor(ircmsg: IrcMessage, cfg: Config, db_client: MongoClient) {
 		let msg_split = ircmsg.message.split(" ");
 		// allow prefixes with 1 space in them
 		if (cfg.cmd_prefix.includes(" "))
@@ -98,6 +100,7 @@ export class CommandContext {
 		this.sudoers = cfg.sudoers;
 		this.cmd_prefix = cfg.cmd_prefix;
 		this.all_commands = cfg.get_all_commands();
+		this.db_client = db_client;
 	}
 }
 

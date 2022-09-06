@@ -11,7 +11,7 @@ const Coinflip: CommandModule = {
 
 		return {
 			is_success: true,
-			output: `it is... ${out}`,
+			output: `it is... ${out}!`,
 		}
 	},
 

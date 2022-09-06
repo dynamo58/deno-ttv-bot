@@ -252,7 +252,7 @@ export default class Bot {
 		if (ircmsg_is_command_fmt(ircmsg, this.cfg.cmd_prefix) &&
 			!this.cfg.disregarded_users.includes(ircmsg.username)
 		) {
-			const ctx = new CommandContext(ircmsg, this.cfg);
+			const ctx = new CommandContext(ircmsg, this.cfg, this.db_client!);
 			// the meta commands have to have some speacial handling
 			// that is why it gets quite ugly here
 			switch (ctx.cmd) {
@@ -366,6 +366,11 @@ export default class Bot {
 								startup_time: new Date(),
 								user_counts: new Map(),
 							}
+
+							const notifiers = await db.get_channel_live_notif_subscribers(this.db_client!, this.cfg.channels[channel_idx].id);
+							if (notifiers.length > 0 && this.cfg.channels[channel_idx].client)
+								this.cfg.channels[channel_idx].client!.send(`DinkDonk THE STREAM JUST WENT LIVE DinkDonk @${notifiers.join("@ ")}`)
+
 							break;
 						case "stream.offline":
 							await db.save_stream_stats(this.db_client!, this.cfg.channels[channel_idx]);

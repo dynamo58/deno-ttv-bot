@@ -78,7 +78,7 @@ const Kappa: CommandModule = {
 	},
 
 	description(): string {
-		return "Get the soonest date you will have a golden Kappa ."
+		return "Get the soonest date you will have a golden Kappa"
 	},
 
 	usage(cmd_prefix: string): string {

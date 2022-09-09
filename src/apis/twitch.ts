@@ -91,7 +91,7 @@ export async function request_eventsub_subscription(t: Credentials, loopback_url
 	});
 
 	const json = await r.json();
-	if (json.data) if (json.data.length > 0) {
+	if (json.data && json.data.length > 0) {
 		Log.success(`Sucessfully established ${sub_type} EventSub webhook`);
 		return
 	}

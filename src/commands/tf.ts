@@ -30,7 +30,6 @@ const Tf: CommandModule = {
 		const _c = res.data!.chatters;
 		const chatters = [..._c.admins, ..._c.broadcaster, ..._c.global_mods, ..._c.moderators, ..._c.staff, ..._c.viewers, ..._c.vips];
 		// TODO: generating randoms and skipping duplicated might be better, no????
-		// ---> benchmark
 		chatters.shuffle();
 
 		const chosen = chatters.slice(0, Math.min(chatters.length, count));

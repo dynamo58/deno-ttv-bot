@@ -6,7 +6,7 @@ import * as twitch from "./apis/twitch.ts";
 import * as seven_tv from "./apis/7tv.ts";
 
 import Hook from "./Hook.ts";
-import { Credentials, TwitchChannel } from "./Bot.ts";
+import { Credentials, TwitchChannel, UptimeStats } from "./Bot.ts";
 import CronJob, { ICronJobConstructor } from "./CronJob.ts";
 import { CommandModule } from "./Command.ts";
 
@@ -191,35 +191,42 @@ export default class Config {
 				// if it wasn't for that reason
 				if (users.status === 200) {
 					users.data!.forEach((u, idx) => {
-						const ws = new WebSocket('wss://events.7tv.io/v3');
-						ws.addEventListener('open', function open() {
-							ws.send(JSON.stringify({
-								op: 35,
-								d: {
-									type: "emote_set.update",
-									condition: {
-										object_id: u.id,
+						const seven_tv_socket = () => {
+							// This socket connection has failed on me, but I wasn't able to quite
+							// figure out why that is the case, so this is the solution
+							try {
+								const ws = new WebSocket('wss://events.7tv.io/v3');
+								ws.addEventListener('open', function open() {
+									ws.send(JSON.stringify({
+										op: 35,
+										d: {
+											type: "emote_set.update",
+											condition: {
+												object_id: u.id,
+											}
+										}
+									}))
+								});
+
+								ws.addEventListener('message', (data) => {
+									const d = JSON.parse(data.data).d;
+
+									if (d.body) {
+										const client = this.channels[idx].client;
+										if (d.body.pulled) { // an emote was removed
+											const emote_name = d.body.pulled[0].old_value.name;
+											if (client) client.send(`7tvM an emote was removed: ${emote_name}`);
+										}
+
+										if (d.body.pushed) { // an emote was added
+											const emote_name = d.body.pushed[0].value.name;
+											if (client) client.send(`7tvM new emote added: ${emote_name}`);
+										}
 									}
-								}
-							}))
-						});
-
-						ws.addEventListener('message', (data) => {
-							const d = JSON.parse(data.data).d;
-
-							if (d.body) {
-								const client = this.channels[idx].client;
-								if (d.body.pulled) { // an emote was removed
-									const emote_name = d.body.pulled[0].old_value.name;
-									if (client) client.send(`7tvM an emote was removed: ${emote_name}`);
-								}
-
-								if (d.body.pushed) { // an emote was added
-									const emote_name = d.body.pushed[0].value.name;
-									if (client) client.send(`7tvM new emote added: ${emote_name}`);
-								}
-							}
-						});
+								});
+							} catch { seven_tv_socket() }
+						}
+						seven_tv_socket();
 					});
 				}
 			});

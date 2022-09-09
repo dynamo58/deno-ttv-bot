@@ -1,8 +1,10 @@
-import { TwitchChannel, TwitchUserBasicInfo } from "../Bot.ts";
+import { TwitchChannel, TwitchUserBasicInfo, UptimeStats } from "../Bot.ts";
 import { MongoClient } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
 
 import { StreamStats, OnlineNotificationSubscribers } from "./schemas.ts";
 import Log from "../Log.ts";
+import { Lurker } from "../commands/lurk.ts";
+import { Reminder } from "../commands/remind.ts";
 
 export async function save_stream_stats(db_client: MongoClient, channel: TwitchChannel) {
 	const db = db_client.database("data");
@@ -57,4 +59,33 @@ export async function add_user_as_live_notif_subscriber(db_client: MongoClient, 
 
 		return 200;
 	} catch (e) { Log.warn(e); return 500 }
+}
+
+async function push_map<T>(db_client: MongoClient, db_label: string, data: Map<number, T>) {
+	const db = db_client.database("data");
+	const db_t = db.collection<{ id: number, data: T }>(db_label);
+
+	await db_t.delete({});
+	const d = Array.from(data).map((d) => { return { id: d[0], data: d[1] } });
+	if (d.length > 0) await db_t.insertMany(d);
+}
+
+async function pull_map<T>(db_client: MongoClient, db_label: string): Promise<Map<number, T>> {
+	const db = db_client.database("data");
+	const db_t = db.collection<{ id: number, data: T }>(db_label);
+	return new Map((await db_t.find({}).toArray()).map((i) => [i.id, i.data]));
+}
+
+export async function push_all(db_client: MongoClient, reminders: Map<number, Reminder[]>, lurkers: Map<number, Lurker>, uptime_stats: Map<number, UptimeStats | null>) {
+	await push_map(db_client, "reminders", reminders);
+	await push_map(db_client, "lurkers", lurkers);
+	await push_map(db_client, "uptime_stats", uptime_stats);
+}
+
+export async function pull_all(db_client: MongoClient): Promise<{ reminders: Map<number, Reminder[]>, lurkers: Map<number, Lurker>, uptime_stats: Map<number, UptimeStats | null> }> {
+	return {
+		reminders: await pull_map(db_client, "reminders"),
+		lurkers: await pull_map(db_client, "lurkers"),
+		uptime_stats: await pull_map(db_client, "uptime_stats"),
+	}
 }

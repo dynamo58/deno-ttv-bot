@@ -24,21 +24,23 @@ export interface TwitchUserBasicInfo {
 	id: number,
 }
 
+export interface UptimeStats {
+	// number of messages sent since stream went live
+	messages_sent: number,
+	// the games (categories) a streamer was in since ...
+	games_played: string[],
+	// the date when streamer went live
+	startup_time: Date,
+	// map between chatter user-id twitch ids and their message counts
+	user_counts: Map<number, number>
+}
+
 export interface TwitchChannel extends TwitchUserBasicInfo {
 	// tmi.js client
 	client?: Channel,
 	// statistics about a live broadcast that have to be kept all the time
 	// null if channel isn't live 
-	uptime_stats: {
-		// number of messages sent since stream went live
-		messages_sent: number,
-		// the games (categories) a streamer was in since ...
-		games_played: string[],
-		// the date when streamer went live
-		startup_time: Date,
-		// map between chatter user-id twitch ids and their message counts
-		user_counts: Map<number, number>
-	} | null,
+	uptime_stats: UptimeStats | null,
 	// hooks in a channel, see ./Hook.ts for more info
 	hooks: Hook[],
 	// keep track of "pyramids" in chat
@@ -163,6 +165,11 @@ export default class Bot {
 			if (this.cfg.disregarded_users.includes(ircmsg.username)) continue;
 			switch (ircmsg.command) {
 				case "PRIVMSG":
+					// if (ircmsg.message === "#test" && ircmsg.username === "pepega00000") {
+					// 	console.log(db.pull_lurkers(this.db_client!));
+					// }
+
+
 					// do all the checks that come after a normal chat message
 					this.handle_hooks(c, channel_idx, ircmsg);
 					this.handle_pyramid(c, channel_idx, ircmsg);
@@ -332,6 +339,23 @@ export default class Bot {
 		}
 	}
 
+	async handle_db_data_pull() {
+		const { uptime_stats, reminders, lurkers } = await db.pull_all(this.db_client!);
+		this.cfg.lurkers = lurkers;
+		this.cfg.reminders = reminders;
+
+		uptime_stats.forEach(async (s, i) => {
+			const idx = this.cfg.get_channel_idx_by_id(i);
+			if (idx !== null) {
+				const r = await twitch.get_channel(this.cfg.credentials, this.cfg.channels[idx].nickname);
+				if (r.data && r.data.data.length >= 0)
+					this.cfg.channels[idx].uptime_stats = s;
+				else
+					await db.save_stream_stats(this.db_client!, this.cfg.channels[idx]);
+			}
+		})
+	}
+
 	// -------------------------------------------------------------------------
 	// eventsub
 	// -------------------------------------------------------------------------
@@ -471,12 +495,19 @@ export default class Bot {
 		if (this.cfg.database_kind === "mongo") {
 			const mongo = new MongoClient();
 			await mongo.connect(Deno.env.get("MONGODB_SRV")!)
-			Log.success(`Successfully connected to MongoDB database`);
+			Log.success(`Connected to MongoDB database`);
 			this.db_client = mongo;
 		}
 
+		setInterval(async () => {
+			await db.push_all(this.db_client!, this.cfg.reminders, this.cfg.lurkers, new Map(this.cfg.channels.map((c) => [c.id, c.uptime_stats])));
+			Log.info(`Synced local data with database.`)
+		}, 10 * 1000)
+
 		this.start_cronjobs();
-		this.init_eventsub();
+		await this.handle_db_data_pull();
+		Log.success(`Pulled data from database.`)
+		await this.init_eventsub();
 	}
 }
 

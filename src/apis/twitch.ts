@@ -69,7 +69,6 @@ export async function get_eventsub_accesstoken(_t: Credentials): Promise<APICall
 }
 
 export async function request_eventsub_subscription(t: Credentials, loopback_url: string, access_token: string, user_id: number, sub_type: string) {
-
 	const r = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
 		method: "POST",
 		headers: {
@@ -96,9 +95,42 @@ export async function request_eventsub_subscription(t: Credentials, loopback_url
 		Log.success(`Sucessfully established ${sub_type} EventSub webhook`);
 		return
 	}
-	Log.warn(JSON.stringify(json));
-	Log.error(`Failed to get EventSub`);
-	Deno.exit(1);
+	if (json.status == 429) {
+		const ids = await get_eventsub_subscription_ids(t, access_token);
+		await delete_eventsub_subscription_ids(t, ids, access_token);
+		await request_eventsub_subscription(t, loopback_url, access_token, user_id, sub_type);
+	} else {
+		Log.error(JSON.stringify(json));
+		Log.error(`Failed to get EventSub`);
+		Deno.exit(1);
+	}
+}
+
+async function get_eventsub_subscription_ids(t: Credentials, access_token: string) {
+	const ids: string[] = [];
+	const res = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
+		headers: {
+			'Client-ID': t.app_client_id,
+			'Authorization': 'Bearer ' + access_token
+		},
+	})
+	const json = await res.json();
+
+	for (const sub of json.data)
+		ids.push(sub.id);
+
+	return ids
+}
+
+async function delete_eventsub_subscription_ids(t: Credentials, ids: string[], access_token: string) {
+	for (const id of ids)
+		await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${id}`, {
+			method: "DELETE",
+			headers: {
+				'Client-ID': t.app_client_id,
+				'Authorization': 'Bearer ' + access_token
+			}
+		})
 }
 
 export async function get_chatters(channel_name: string): Promise<APICallResult<TmiChatters>> {

@@ -366,16 +366,16 @@ export default class Bot {
 							const r = await twitch.get_channel(this.cfg.credentials, this.cfg.channels[channel_idx].nickname);
 							if (r.status !== 200) { Log.warn(`Getting channel information for ${this.cfg.channels[channel_idx].nickname} failed.`); return }
 
+							const notifiers = await db.get_channel_live_notif_subscribers(this.db_client!, this.cfg.channels[channel_idx].id);
+							if (notifiers.length > 0 && this.cfg.channels[channel_idx].client && this.cfg.channels[channel_idx].uptime_stats !== null)
+								this.cfg.channels[channel_idx].client!.send(`DinkDonk THE STREAM JUST WENT LIVE DinkDonk @${notifiers.map(n => n.nickname).join("@ ")}`)
+
 							this.cfg.channels[channel_idx].uptime_stats = {
 								messages_sent: 0,
 								games_played: [r.data!.data[0].game_name],
 								startup_time: new Date(),
 								user_counts: new Map(),
 							}
-
-							const notifiers = await db.get_channel_live_notif_subscribers(this.db_client!, this.cfg.channels[channel_idx].id);
-							if (notifiers.length > 0 && this.cfg.channels[channel_idx].client)
-								this.cfg.channels[channel_idx].client!.send(`DinkDonk THE STREAM JUST WENT LIVE DinkDonk @${notifiers.join("@ ")}`)
 
 							break;
 						case "stream.offline":

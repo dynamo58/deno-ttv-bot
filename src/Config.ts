@@ -28,6 +28,7 @@ import Lurk, { Lurker } from "./commands/lurk.ts";
 import Wolfram from "./commands/wolfram.ts";
 import Coinflip from "./commands/coinflip.ts";
 import NotifyMe from "./commands/notifyme.ts";
+import Define from "./commands/define.ts";
 
 type DatabaseKind = undefined | "mongo";
 
@@ -64,18 +65,7 @@ export default class Config {
 
 	constructor(cfg: IConfigConstructor) {
 		try {
-			const twitch_oauth = Deno.env.get("TWITCH_OAUTH")!;
-			const twitch_login = Deno.env.get("TWITCH_LOGIN")!;
-			const twitch_client_id = Deno.env.get("TWITCH_CLIENT_ID")!;
-			const twitch_app_client_id = Deno.env.get("TWITCH_APP_CLIENT_ID")!;
-			const twitch_app_client_secret = Deno.env.get("TWITCH_APP_SECRET")!;
-			const wolfram_appid = Deno.env.get("WOLFRAMALPHA_APPID")!;
-			// If no secret is provided, that is OK
-			// ... actually it is preferred that way
-			const secret = Deno.env.get("SECRET") ?? createHash("sha1").toString();
-
 			this.cmd_prefix = cfg.cmd_prefix ?? "!";
-			this.client = new TwitchChat(twitch_oauth, twitch_login);
 			this.channels = [];
 			this.disregarded_users = [];
 			this.sudoers = [];
@@ -83,14 +73,15 @@ export default class Config {
 			this.database_kind = cfg.database_kind;
 			this.loopback_address = null;
 			this.credentials = {
-				login: twitch_login,
-				oauth: twitch_oauth,
-				client_id: twitch_client_id,
-				app_client_id: twitch_app_client_id,
-				app_secret: twitch_app_client_secret,
-				secret,
-				wolfram_appid,
+				login: Deno.env.get("TWITCH_LOGIN")!,
+				oauth: Deno.env.get("TWITCH_OAUTH")!,
+				client_id: Deno.env.get("TWITCH_CLIENT_ID")!,
+				app_client_id: Deno.env.get("TWITCH_APP_CLIENT_ID")!,
+				app_secret: Deno.env.get("TWITCH_APP_SECRET")!,
+				wolfram_appid: Deno.env.get("WOLFRAMALPHA_APPID")!,
+				secret: createHash("sha1").toString(),
 			};
+			this.client = new TwitchChat(this.credentials.oauth, this.credentials.login);
 			this.startup_time = null;
 			this.cron_jobs = [];
 			this.reminders = new Map();
@@ -113,7 +104,8 @@ export default class Config {
 				["math", Wolfram],
 				["cf", Coinflip],
 				["coinflip", Coinflip],
-				["notifyme", NotifyMe]
+				["notifyme", NotifyMe],
+				["define", Define]
 			])
 		} catch (e) {
 			throw e;

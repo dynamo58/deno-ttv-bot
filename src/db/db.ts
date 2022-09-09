@@ -2,6 +2,7 @@ import { TwitchChannel, TwitchUserBasicInfo } from "../Bot.ts";
 import { MongoClient } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
 
 import { StreamStats, OnlineNotificationSubscribers } from "./schemas.ts";
+import Log from "../Log.ts";
 
 export async function save_stream_stats(db_client: MongoClient, channel: TwitchChannel) {
 	const db = db_client.database("data");
@@ -55,5 +56,5 @@ export async function add_user_as_live_notif_subscriber(db_client: MongoClient, 
 		)
 
 		return 200;
-	} catch (e) { console.log(e); return 500 }
+	} catch (e) { Log.warn(e); return 500 }
 }

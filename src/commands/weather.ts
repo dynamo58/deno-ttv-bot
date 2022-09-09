@@ -1,5 +1,5 @@
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
-import { get_weather } from "../apis/wttr_in.ts";
+import { get_weather_str } from "../apis/wttr_in.ts";
 
 const Weather: CommandModule = {
 	sufficient_privilege: 0,
@@ -12,12 +12,13 @@ const Weather: CommandModule = {
 				output: `Please provide a location.`,
 			}
 
-		const res = await get_weather(loc);
+		const res = await get_weather_str(loc);
 		if (res.status !== 200) return { is_success: false, output: `@${ctx.caller} something messed up ApuApustaja TeaTime` }
 		const weather = res.data!;
+
 		return {
 			is_success: true,
-			output: `${weather.recognized_area}: feels like ${weather.feels_like_c}°C, ${weather.sky_condition}`
+			output: `${weather}`
 		}
 	},
 

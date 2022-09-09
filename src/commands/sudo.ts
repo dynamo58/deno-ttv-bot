@@ -1,4 +1,6 @@
+import { _createWalkEntry } from "https://deno.land/std@0.125.0/fs/walk.ts";
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
+import Log from "../Log.ts";
 
 const Sudo: CommandModule = {
 	sufficient_privilege: 0,
@@ -10,20 +12,38 @@ const Sudo: CommandModule = {
 			output: `Only hackermen allowed B)`,
 		}
 
+		let action: string | undefined;
 		const kwargs = ctx.kwargs();
-		if (!kwargs.get("action")) return {
+		if (kwargs.get("action")) action = kwargs.get("action");
+		else if (ctx.args.length > 0) action = ctx.args[0];
+
+		if (action === undefined) return {
 			is_success: false,
 			output: `No action an provided.`,
 		}
 
-		switch (kwargs.get("action")!) {
+		switch (action.toLowerCase()) {
 			case "kill":
-				setTimeout(() => { Deno.exit(0); }, 100);
-
+				setTimeout(() => {
+					// TODO: do something about this lole
+					Deno.run({ cmd: ["killall", "deno"] });
+					Deno.run({ cmd: ["killall", "ngrok"] });
+					Deno.exit(0);
+				}, 100);
 				return {
 					is_success: false,
 					output: "Going down FeelsBadMan 👍 ",
 				}
+			case "restart":
+				setTimeout(async () => {
+					const s = Deno.run({ cmd: ["git", "pull", "origin", "main"] })
+					await s.status();
+					Deno.run({ cmd: ["deno", "run", "-A", "src/main.ts", "&!"] });
+					Log.success(`Goodbye, cruel world`);
+					Deno.exit(0);
+				}, 200);
+
+				return { is_success: true, output: `pulling origin, rebooting... MrDestructoid` }
 			default:
 				return {
 					is_success: false,

@@ -1,12 +1,12 @@
-import { TwitchChat } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
+import { TwitchChat } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import { createHash } from "https://deno.land/std@0.77.0/hash/mod.ts";
 
 import * as twitch from "./apis/twitch.ts";
 import * as seven_tv from "./apis/7tv.ts";
 
 import Hook from "./Hook.ts";
-import { Credentials, TwitchChannel, UptimeStats } from "./Bot.ts";
+import { Credentials, TwitchChannel } from "./Bot.ts";
 import CronJob, { ICronJobConstructor } from "./CronJob.ts";
 import { CommandModule } from "./Command.ts";
 

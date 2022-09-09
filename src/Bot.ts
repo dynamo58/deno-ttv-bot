@@ -195,12 +195,10 @@ export default class Bot {
 		if (tags["system-msg"] && tags["system-msg"].includes("subscribed")) {
 
 			// const c = this.cfg.channels.filter(c => c.id === 149355320)[0].client!; // test test testing
-			if (tags["system-msg"].includes("They've") && this.cfg.channels[channel_idx].resubscribe_message) {
-				c.send(this.cfg.channels[channel_idx].resubscribe_message!.replace("{{ NAME }}", ircmsg.tags["display-name"]))
-			}
-			else if (tags["system-msg"].includes("subscribed") && this.cfg.channels[channel_idx].subscribe_message) {
-				c.send(this.cfg.channels[channel_idx].subscribe_message!.replace("{{ NAME }}", ircmsg.tags["display-name"]))
-			}
+			if (tags["system-msg"].includes("They've") && this.cfg.channels[channel_idx].resubscribe_message)
+				c.send(this.cfg.channels[channel_idx].resubscribe_message!.replace("{{ NAME }}", ircmsg.tags["display-name"]));
+			else if (this.cfg.channels[channel_idx].subscribe_message)
+				c.send(this.cfg.channels[channel_idx].subscribe_message!.replace("{{ NAME }}", ircmsg.tags["display-name"]));
 		}
 
 	}
@@ -319,6 +317,7 @@ export default class Bot {
 		if (this.cfg.channels[channel_idx].uptime_stats !== null) {
 			this.cfg.channels[channel_idx].uptime_stats!.messages_sent += 1;
 			const user_id = parseInt(ircmsg.tags["user-id"]);
+			// console.log(this.cfg.channels[channel_idx])
 			const curr = this.cfg.channels[channel_idx].uptime_stats!.user_counts.get(user_id);
 
 			if (curr)
@@ -501,12 +500,12 @@ export default class Bot {
 
 		setInterval(async () => {
 			await db.push_all(this.db_client!, this.cfg.reminders, this.cfg.lurkers, new Map(this.cfg.channels.map((c) => [c.id, c.uptime_stats])));
-			Log.info(`Synced local data with database.`)
-		}, 10 * 1000)
+			Log.info(`Synced local data with database`)
+		}, 5 * 60 * 1000)
 
 		this.start_cronjobs();
 		await this.handle_db_data_pull();
-		Log.success(`Pulled data from database.`)
+		Log.success(`Pulled data from database`)
 		await this.init_eventsub();
 	}
 }

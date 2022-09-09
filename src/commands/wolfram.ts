@@ -22,7 +22,7 @@ const Wolfram: CommandModule = {
 		if (query.status != 200) return { is_success: false, output: "something went wrong (check your query). OK" }
 
 		let output: string | undefined;
-		if (query.data!.queryresult.pods.length > 0) {
+		if (query.data!.queryresult.pods && query.data!.queryresult.pods.length > 0) {
 			const main_pods = query.data!.queryresult.pods.filter(p => p.primary);
 			if (main_pods.length > 0)
 				if (main_pods[0].subpods.length > 0)
@@ -31,7 +31,7 @@ const Wolfram: CommandModule = {
 
 		return {
 			is_success: true,
-			output: output ?? "<no result found>. FeelsDankMan",
+			output: output ?? "no result found FeelsDankMan TeaTime",
 		}
 	},
 

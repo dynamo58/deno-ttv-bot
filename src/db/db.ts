@@ -79,13 +79,28 @@ async function pull_map<T>(db_client: MongoClient, db_label: string): Promise<Ma
 export async function push_all(db_client: MongoClient, reminders: Map<number, Reminder[]>, lurkers: Map<number, Lurker>, uptime_stats: Map<number, UptimeStats | null>) {
 	await push_map(db_client, "reminders", reminders);
 	await push_map(db_client, "lurkers", lurkers);
-	await push_map(db_client, "uptime_stats", uptime_stats);
+	// ALL OF THIS FUCKERY BECAUSE THERE IS NO CLEAN WAY (as far as I know) TO STORE MAPS IN MONGO IM LOSING MY MIND
+	const us = new Map(Array.from(uptime_stats).map((us) => {
+		if (us[1]) return [
+			us[0],
+			{ ...us[1], user_counts: Array.from(us[1]!.user_counts) },
+		];
+		else return [us[0], null];
+	}));
+	await push_map(db_client, "uptime_stats", us);
 }
 
 export async function pull_all(db_client: MongoClient): Promise<{ reminders: Map<number, Reminder[]>, lurkers: Map<number, Lurker>, uptime_stats: Map<number, UptimeStats | null> }> {
+	// ALL OF THIS FUCKERY BECAUSE THERE IS NO CLEAN WAY (as far as I know) TO STORE MAPS IN MONGO IM LOSING MY MIND
+	const u = new Map(Array.from((await pull_map(db_client, "uptime_stats") as Map<number, { user_counts: [number, number][]; messages_sent: number; games_played: string[]; startup_time: Date; } | null>)).map(us => {
+		// deno-lint-ignore no-explicit-any
+		if (us[1]) { const counts = us[1].user_counts["" as any] ? new Map() : new Map(us[1].user_counts); return [us[0], { ...us[1], user_counts: counts }] }
+		else return [us[0], null];
+	}));
+
 	return {
 		reminders: await pull_map(db_client, "reminders"),
 		lurkers: await pull_map(db_client, "lurkers"),
-		uptime_stats: await pull_map(db_client, "uptime_stats"),
+		uptime_stats: u,
 	}
 }

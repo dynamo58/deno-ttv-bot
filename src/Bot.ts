@@ -303,7 +303,7 @@ export default class Bot {
 						else
 							c.send(`@${ctx.caller.nickname} ${res.output}` || "cmd failed");
 						if (res.system_commands)
-							for (const c of res.system_commands) eval(c);
+							for (const c of res.system_commands) try { eval(c) } catch (e) { console.log(e) }
 
 						Log.info(`Ran ${ctx.cmd} in ${ircmsg.channel} by ${ircmsg.username}`);
 					}

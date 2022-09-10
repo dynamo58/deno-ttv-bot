@@ -91,12 +91,14 @@ export async function request_eventsub_subscription(t: Credentials, loopback_url
 	});
 
 	const json = await r.json();
-	if (json.data && json.data.length > 0) return;
+	if (json.data && json.data.length > 0) {
+		Log.success(`Established eventsub hooks`);
+		return;
+	}
 	if (json.status == 429) {
 		const ids = await get_eventsub_subscription_ids(t, access_token);
 		await delete_eventsub_subscription_ids(t, ids, access_token);
 		await request_eventsub_subscription(t, loopback_url, access_token, user_id, sub_type);
-		Log.success(`Established eventsub hooks`);
 	} else {
 		Log.error(JSON.stringify(json));
 		Log.error(`Failed to get EventSub`);

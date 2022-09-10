@@ -16,7 +16,7 @@ async function main(): Promise<void> {
 				resubscribe_message: "@{{ NAME }} welcome back to the G spot flushE",
 			},
 			{
-				name: "pepega00000",
+				name: "lovcen",
 			}])
 		.enable_7tv_notifications()
 		.disregard_users([

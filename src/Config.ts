@@ -29,6 +29,7 @@ import Wolfram from "./commands/wolfram.ts";
 import Coinflip from "./commands/coinflip.ts";
 import NotifyMe from "./commands/notifyme.ts";
 import Define from "./commands/define.ts";
+import Logs, { RandLog } from "./commands/log.ts";
 
 type DatabaseKind = undefined | "mongo";
 
@@ -105,7 +106,10 @@ export default class Config {
 				["cf", Coinflip],
 				["coinflip", Coinflip],
 				["notifyme", NotifyMe],
-				["define", Define]
+				["define", Define],
+				["logs", Logs],
+				["randlog", RandLog],
+				["logrand", RandLog],
 			])
 		} catch (e) {
 			throw e;

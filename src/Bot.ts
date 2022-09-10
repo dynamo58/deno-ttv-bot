@@ -249,8 +249,7 @@ export default class Bot {
 
 			if (pyr.count === 1 && !pyr.is_ascending)
 				c.send(`@${ircmsg.username} just finished a ${pyr.max_count}-wide pyramid PagMan 👉  ${pyr.unit}`);
-			else
-				return;
+			else return;
 		}
 
 		if (ircmsg.message === msg_split[0])
@@ -441,9 +440,7 @@ export default class Bot {
 			Log.success(`Got ngrok tunnel address`);
 			return loopback!;
 
-		} else
-			throw new Error("Insert deploy URL here");
-		// return "TODO";
+		} else return "46.101.248.193:443";
 	}
 
 	// -------------------------------------------------------------------------

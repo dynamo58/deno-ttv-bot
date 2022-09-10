@@ -2,6 +2,9 @@ import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import * as twitch from "../apis/twitch.ts";
 import { Credentials } from "../Bot.ts";
 import { format_duration } from "../std_redeclarations.ts";
+import { _createWalkEntry } from "https://deno.land/std@0.125.0/fs/walk.ts";
+
+import * as db from "../db/db.ts";
 
 const get_most_active_chatter_nickname = async (t: Credentials, chatter_counts: Map<number, number>): Promise<[string, number] | null> => {
 	let highest: null | [number, number] = null;
@@ -20,6 +23,21 @@ const Stats: CommandModule = {
 	sufficient_privilege: 0,
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
+		if (ctx.args.includes("last")) {
+			const latest = await db.get_latest_stats(ctx.db_client, ctx.channel.id);
+			if (latest === null) return { is_success: false, output: `there is no previous record.` }
+
+			const uptime_fmt = format_duration((new Date()).valueOf() - (new Date(latest!.startup_time)).valueOf(), false);
+			const games = latest!.games_played.join(", ");
+			const lines = latest!.messages_sent;
+
+			return {
+				is_success: true,
+				output: `Uptime: ${uptime_fmt} | Games played: ${games} | Message count: ${lines}`,
+			}
+		}
+
+
 		if (ctx.channel.uptime_stats === null)
 			return {
 				is_success: true,

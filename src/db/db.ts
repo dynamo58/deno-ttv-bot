@@ -104,3 +104,10 @@ export async function pull_all(db_client: MongoClient): Promise<{ reminders: Map
 		uptime_stats: u,
 	}
 }
+
+export async function get_latest_stats(db_client: MongoClient, channel_user_id: number): Promise<StreamStats | null> {
+	const db = db_client.database("data");
+	const db_stats = db.collection<StreamStats>("stats");
+	const latest = await db_stats.findOne({ channel_id: channel_user_id });
+	return latest ?? null;
+}

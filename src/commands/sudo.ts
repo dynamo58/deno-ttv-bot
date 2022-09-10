@@ -26,7 +26,6 @@ const Sudo: CommandModule = {
 			case "kill":
 				setTimeout(() => {
 					// TODO: do something about this lole
-					Deno.run({ cmd: ["killall", "deno"] });
 					Deno.run({ cmd: ["killall", "ngrok"] });
 					Deno.exit(0);
 				}, 100);
@@ -43,7 +42,11 @@ const Sudo: CommandModule = {
 					Deno.exit(0);
 				}, 200);
 
-				return { is_success: true, output: `pulling origin, rebooting... MrDestructoid` }
+				return {
+					is_success: true,
+					output: `pulling origin, rebooting... MrDestructoid`,
+					system_commands: ["this.cfg.channels.forEach(async c => await db.save_stream_stats(this.db_client!, c))"]
+				}
 			default:
 				return {
 					is_success: false,

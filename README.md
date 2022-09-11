@@ -28,7 +28,8 @@ $ git clone https://github.com/dynamo58/deno-ttv-bot
 $ cd deno-ttv-bot
 ```
 
-Inspect the `src/main.example.ts` and modify it. Then run
+Now rename the `.env.example` file to `.env` and populate it with your
+information. Then inspect the `src/main.example.ts` and modify it. Then run
 
 ```bash
 $ TESTING=1 LOCAL=1 PORT=3000 deno run --allow-read --allow-net --allow-env

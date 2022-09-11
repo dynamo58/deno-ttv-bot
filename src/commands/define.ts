@@ -27,13 +27,13 @@ export interface Meaning {
 	partOfSpeech: string
 	definitions: Definition[]
 	synonyms: string[]
-	antonyms: any[]
+	antonyms: string[]
 }
 
 export interface Definition {
 	definition: string
-	synonyms: any[]
-	antonyms: any[]
+	synonyms: string[]
+	antonyms: string[]
 }
 
 export interface License2 {

@@ -24,6 +24,7 @@ const Stats: CommandModule = {
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		if (ctx.args.includes("last")) {
+			if (!ctx.db_client) return { is_success: false, output: `this feature is currently not available, sorry PoroSad` }
 			const latest = await db.get_latest_stats(ctx.db_client, ctx.channel.id);
 			if (latest === null) return { is_success: false, output: `there is no previous record.` }
 

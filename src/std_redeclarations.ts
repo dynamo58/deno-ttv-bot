@@ -5,9 +5,11 @@ declare global {
 		sum(): number,
 	}
 
-	// interface Array<number> {
-	// 
-	// }
+	enum Result {
+		Success = 200,
+		UserError = 400,
+		UnknownOrServerError = 500,
+	}
 
 	interface Math {
 		clamp(n: number, min: number, max: number): number,

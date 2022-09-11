@@ -16,11 +16,6 @@ export enum UserPrivilege {
 	Broadcaster = 3, // the streamer himself
 }
 
-// run before constructing to know if the message actually is a command or not
-export function ircmsg_is_command_fmt(ircmsg: IrcMessage, cmd_prefix: string): boolean {
-	return ircmsg.message.startsWith(cmd_prefix);
-}
-
 export class CommandContext {
 	cmd: string;
 	cmd_prefix: string;
@@ -32,7 +27,7 @@ export class CommandContext {
 	caller: TwitchUserBasicInfo;
 	sudoers: number[];
 	all_commands: string[];
-	db_client: MongoClient;
+	db_client: MongoClient | undefined;
 
 	// get a map of keyword arguments
 	// allowed delimiters: (none), '', "",
@@ -84,7 +79,7 @@ export class CommandContext {
 		return UserPrivilege.None;
 	}
 
-	constructor(ircmsg: IrcMessage, cfg: Config, db_client: MongoClient) {
+	constructor(ircmsg: IrcMessage, cfg: Config, db_client?: MongoClient) {
 		let msg_split = ircmsg.message.split(" ");
 		// allow prefixes with 1 space in them
 		if (cfg.cmd_prefix.includes(" "))

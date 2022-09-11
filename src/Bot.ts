@@ -4,7 +4,7 @@ import { format_duration } from "./std_redeclarations.ts";
 
 import { Channel, IrcMessage } from "https://deno.land/x/tmi@v1.0.5/mod.ts";
 import * as twitch from "./apis/twitch.ts";
-import { CommandContext, ircmsg_is_command_fmt } from "./Command.ts";
+import { CommandContext } from "./Command.ts";
 import Hook, { validate_hook } from "./Hook.ts";
 import Config from "./Config.ts";
 import { Reminder } from "./commands/remind.ts";
@@ -95,7 +95,7 @@ export default class Bot {
 			if (this.cfg.channels[channel_idx].uptime_stats !== null) {
 				// channel just went offline
 				if (this.db_client) {
-					await db.save_stream_stats(this.db_client!, this.cfg.channels[channel_idx])
+					await db.save_stream_stats(this.db_client, this.cfg.channels[channel_idx])
 					Log.info(`Saved stream data after ${this.cfg.channels[channel_idx].nickname} ended their stream.`)
 				}
 			}
@@ -166,7 +166,6 @@ export default class Bot {
 			switch (ircmsg.command) {
 				case "PRIVMSG":
 					// if (ircmsg.message === "#test" && ircmsg.username === "pepega00000") {
-					// 	console.log(db.pull_lurkers(this.db_client!));
 					// }
 
 
@@ -259,10 +258,10 @@ export default class Bot {
 	}
 
 	async handle_commands(c: Channel, ircmsg: IrcMessage) {
-		if (ircmsg_is_command_fmt(ircmsg, this.cfg.cmd_prefix) &&
+		if (ircmsg.message.startsWith(this.cfg.cmd_prefix) &&
 			!this.cfg.disregarded_users.includes(ircmsg.username)
 		) {
-			const ctx = new CommandContext(ircmsg, this.cfg, this.db_client!);
+			const ctx = new CommandContext(ircmsg, this.cfg, this.db_client);
 			// the meta commands have to have some speacial handling
 			// that is why it gets quite ugly here
 			switch (ctx.cmd) {
@@ -495,14 +494,16 @@ export default class Bot {
 			this.db_client = mongo;
 		}
 
-		setInterval(async () => {
-			await db.push_all(this.db_client!, this.cfg.reminders, this.cfg.lurkers, new Map(this.cfg.channels.map((c) => [c.id, c.uptime_stats])));
-			Log.info(`Synced local data with database`)
-		}, 5 * 60 * 1000)
+		if (this.cfg.database_kind) {
+			setInterval(async () => {
+				await db.push_all(this.db_client!, this.cfg.reminders, this.cfg.lurkers, new Map(this.cfg.channels.map((c) => [c.id, c.uptime_stats])));
+				Log.info(`Synced local data with database`)
+			}, 5 * 60 * 1000);
+			await this.handle_db_data_pull();
+			Log.success(`Pulled data from database`)
+		}
 
 		this.start_cronjobs();
-		await this.handle_db_data_pull();
-		Log.success(`Pulled data from database`)
 		await this.init_eventsub();
 	}
 }

@@ -1,14 +1,17 @@
 import { TwitchChannel, TwitchUserBasicInfo, UptimeStats } from "../Bot.ts";
-import { MongoClient } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
+import { Collection, MongoClient } from "https://deno.land/x/mongo@v0.31.0/mod.ts";
 
 import { StreamStats, OnlineNotificationSubscribers } from "./schemas.ts";
 import Log from "../Log.ts";
 import { Lurker } from "../commands/lurk.ts";
 import { Reminder } from "../commands/remind.ts";
 
+function collection<T>(db_client: MongoClient, label: string): Collection<T> {
+	return db_client.database("testing").collection<T>(label)
+}
+
 export async function save_stream_stats(db_client: MongoClient, channel: TwitchChannel) {
-	const db = db_client.database("data");
-	const db_stats = db.collection<StreamStats>("stats");
+	const c = collection<StreamStats>(db_client, "stats")
 
 	const stats: StreamStats = {
 		channel_id: channel.id,
@@ -19,40 +22,29 @@ export async function save_stream_stats(db_client: MongoClient, channel: TwitchC
 		duration_hours: +(((new Date()).valueOf() - channel.uptime_stats!.startup_time.valueOf()) / (1000 * 60 * 60)).toPrecision(2),
 	};
 
-	await db_stats.insertOne(stats);
+	await c.insertOne(stats);
 }
 
-enum AddUserAsLiveNotifSubscriberRes {
-	UserAdded = 200,
-	UserAlreadySubscribes = 400,
-	UnknownError = 500,
-}
-
-// TODO: error-proof this
 export async function get_channel_live_notif_subscribers(db_client: MongoClient, channel_id: number): Promise<TwitchUserBasicInfo[]> {
-	const db = db_client.database("data");
-	const db_notifs = db.collection<OnlineNotificationSubscribers>("live_notif_subscribers");
-
-	const curr = await db_notifs.findOne({ channel_id });
-
+	const c = collection<OnlineNotificationSubscribers>(db_client, "live_notif_subscribers");
+	const curr = await c.findOne({ channel_id });
 	return curr?.subscribers ?? [];
 }
 
-export async function add_user_as_live_notif_subscriber(db_client: MongoClient, channel_id: number, user: TwitchUserBasicInfo): Promise<AddUserAsLiveNotifSubscriberRes> {
+export async function add_user_as_live_notif_subscriber(db_client: MongoClient, channel_id: number, user: TwitchUserBasicInfo): Promise<Result> {
 	try {
-		const db = db_client.database("data");
-		const db_notifs = db.collection<OnlineNotificationSubscribers>("live_notif_subscribers");
+		const c = collection<OnlineNotificationSubscribers>(db_client, "live_notif_subscribers");
 
-		const curr = await db_notifs.findOne({ channel_id });
+		const curr = await c.findOne({ channel_id });
 
 		if (!curr) {
-			await db_notifs.insertOne({ channel_id, subscribers: [user] });
+			await c.insertOne({ channel_id, subscribers: [user] });
 			return 200;
 		}
 		const u = curr!.subscribers.filter(u => u.id === user.id);
 		if (u.length > 0) return 400;
 
-		db_notifs.updateOne(
+		c.updateOne(
 			{ channel_id },
 			{ $set: { subscribers: [...curr!.subscribers, user] } }
 		)
@@ -62,18 +54,16 @@ export async function add_user_as_live_notif_subscriber(db_client: MongoClient, 
 }
 
 async function push_map<T>(db_client: MongoClient, db_label: string, data: Map<number, T>) {
-	const db = db_client.database("data");
-	const db_t = db.collection<{ id: number, data: T }>(db_label);
+	const c = collection<{ id: number, data: T }>(db_client, db_label);
 
-	await db_t.delete({});
+	await c.delete({});
 	const d = Array.from(data).map((d) => { return { id: d[0], data: d[1] } });
-	if (d.length > 0) await db_t.insertMany(d);
+	if (d.length > 0) await c.insertMany(d);
 }
 
 async function pull_map<T>(db_client: MongoClient, db_label: string): Promise<Map<number, T>> {
-	const db = db_client.database("data");
-	const db_t = db.collection<{ id: number, data: T }>(db_label);
-	return new Map((await db_t.find({}).toArray()).map((i) => [i.id, i.data]));
+	const c = collection<{ id: number, data: T }>(db_client, db_label);
+	return new Map((await c.find({}).toArray()).map((i) => [i.id, i.data]));
 }
 
 export async function push_all(db_client: MongoClient, reminders: Map<number, Reminder[]>, lurkers: Map<number, Lurker>, uptime_stats: Map<number, UptimeStats | null>) {
@@ -106,8 +96,7 @@ export async function pull_all(db_client: MongoClient): Promise<{ reminders: Map
 }
 
 export async function get_latest_stats(db_client: MongoClient, channel_user_id: number): Promise<StreamStats | null> {
-	const db = db_client.database("data");
-	const db_stats = db.collection<StreamStats>("stats");
-	const latest = await db_stats.findOne({ channel_id: channel_user_id });
+	const c = collection<StreamStats>(db_client, "stats")
+	const latest = await c.findOne({ channel_id: channel_user_id });
 	return latest ?? null;
 }

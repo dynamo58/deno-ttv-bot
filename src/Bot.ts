@@ -440,8 +440,9 @@ export default class Bot {
 			await ngrok.destroy();
 			Log.success(`Got ngrok tunnel address`);
 			return loopback!;
+		}
 
-		} else return "46.101.248.193:443";
+		return `${Deno.env.get("DEPLOY_URL")}:${parseInt(Deno.env.get("PORT")!)}`;
 	}
 
 	// -------------------------------------------------------------------------

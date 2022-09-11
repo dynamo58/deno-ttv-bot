@@ -30,12 +30,14 @@ import Coinflip from "./commands/coinflip.ts";
 import NotifyMe from "./commands/notifyme.ts";
 import Define from "./commands/define.ts";
 import Logs, { RandLog } from "./commands/log.ts";
+import Log from "./Log.ts";
 
 type DatabaseKind = undefined | "mongo";
 
 interface IConfigConstructor {
 	cmd_prefix?: string,
 	database_kind: DatabaseKind,
+	log_file?: string,
 }
 
 interface IJoinChannel {
@@ -111,6 +113,7 @@ export default class Config {
 				["randlog", RandLog],
 				["logrand", RandLog],
 			])
+			Log.init({ log_file: cfg.log_file })
 		} catch (e) {
 			throw e;
 		}

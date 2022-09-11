@@ -12,6 +12,9 @@ const config = new Config({
 	// TODO: v implement this xd
 	// delete this line to use no database 
 	database_kind: "mongo",
+	// output logs to a file also
+	// delete this line for no file logging 
+	log_file: "log.txt",
 })
 	// provide an array of channels to join
 	.join_channels([

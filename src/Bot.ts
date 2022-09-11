@@ -417,6 +417,7 @@ export default class Bot {
 		for (const c of this.cfg.channels.filter(c => c.has_eventsub))
 			for (const sub_type of ["channel.update", "stream.online", "stream.offline"])
 				await twitch.request_eventsub_subscription(this.cfg.credentials, this.cfg.loopback_address, access_token, c.id, sub_type);
+		Log.success(`Established eventsub hooks`);
 	}
 
 	async get_loopback_address(): Promise<string> {
@@ -436,6 +437,7 @@ export default class Bot {
 				await sleep(0.1);
 			}
 
+			await ngrok.destroy();
 			Log.success(`Got ngrok tunnel address`);
 			return loopback!;
 

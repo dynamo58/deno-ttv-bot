@@ -3,7 +3,7 @@ import Config from "./Config.ts";
 import { get_7tv_emotes } from "./apis/adamcy.ts";
 
 const config = new Config({
-	cmd_prefix: "$",
+	cmd_prefix: ".",
 	database_kind: "mongo",
 })
 	.join_channels([

@@ -2,7 +2,7 @@ import Bot from "./Bot.ts";
 import Config from "./Config.ts";
 
 const config = new Config({
-	cmd_prefix: ".",
+	cmd_prefix: "-",
 	database_kind: "mongo",
 })
 	.join_channels([

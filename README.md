@@ -82,7 +82,7 @@ Description=Run lovcen TTV bot
 [Service]
 User=root
 WorkingDirectory=<path to code>
-ExecStart=/bin/bash -c 'PORT=3006 deno run -A src/main.ts'
+ExecStart=/bin/bash -c 'PORT=3006 deno run -A src/main.prod.ts'
 Restart=always
 
 [Install]

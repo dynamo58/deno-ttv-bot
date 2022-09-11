@@ -166,8 +166,6 @@ export default class Bot {
 			switch (ircmsg.command) {
 				case "PRIVMSG":
 					// if (ircmsg.message === "#test" && ircmsg.username === "pepega00000") {
-					// }
-
 
 					// do all the checks that come after a normal chat message
 					this.handle_hooks(c, channel_idx, ircmsg);
@@ -437,7 +435,7 @@ export default class Bot {
 				await sleep(0.1);
 			}
 
-			await ngrok.destroy();
+			// await ngrok.destroy();
 			Log.success(`Got ngrok tunnel address`);
 			return loopback!;
 		}

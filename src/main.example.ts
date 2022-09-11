@@ -6,7 +6,7 @@ import Config from "./Config.ts";
 // First you create a Config instance using a builder patter like so
 const config = new Config({
 	// the prefix for command like `$ping`
-	cmd_prefix: "$",
+	cmd_prefix: "!",
 	// specify the target database
 	// currently the only one supported is MongoDB
 	// TODO: v implement this xd

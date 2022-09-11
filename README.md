@@ -19,9 +19,9 @@ engine, built with Rust.
 
 # Run yourself
 
-⚠⚠Linux-only⚠⚠ (for now, anyways)
-
 ## Supported platforms
+
+⚠⚠Linux-only⚠⚠ (for now, anyways)
 
 ```bash
 $ git clone https://github.com/dynamo58/deno-ttv-bot
@@ -29,7 +29,28 @@ $ cd deno-ttv-bot
 ```
 
 Now rename the `.env.example` file to `.env` and populate it with your
-information. Then inspect the `src/main.example.ts` and modify it. Then run
+information. Then inspect the `src/main.example.ts` and modify it.
+
+The last step is to setup the database, the MongoDB (currently only DB
+supported) schema is the following
+
+- `data`
+  - `live_notif_subscribers`
+  - `lurkers`
+  - `reminders`
+  - `stats`
+  - `uptime_stats`
+- `testing`
+  - `live_notif_subscribers`
+  - `lurkers`
+  - `reminders`
+  - `stats`
+  - `uptime_stats`
+
+, where `data` is used for live development and `testing` for when testing, so
+that the two never collide.
+
+Then all that is left is to run the bot
 
 ```bash
 $ TESTING=1 LOCAL=1 PORT=3000 deno run --allow-read --allow-net --allow-env
@@ -55,7 +76,6 @@ $ TESTING=1 LOCAL=1 PORT=3000 deno run --allow-read --allow-net --allow-env
 ```bash
 $ cat /etc/systemd/system/lovcen.service
 
-
 [Unit]
 Description=Run lovcen TTV bot
 
@@ -72,19 +92,13 @@ WantedBy=multi-user.target
 2. Enable the service
 
 ```bash
-$ systemctl enable lovcen.service
-$ systemctl daemon-reload
-$ systemctl status lovcen.service
+$ sudo systemctl enable lovcen.service
+$ sudo systemctl daemon-reload
+$ sudo systemctl status lovcen.service
 ● lovcen.service - Run lovcen bot
      Loaded: loaded (/etc/systemd/system/lovcen.service; enabled; vendor preset: enabled)
      Active: active (running) since Sun 2022-09-11 09:08:35 UTC; 1h 14min ago
-   Main PID: 13352 (wrapper.sh)
-      Tasks: 0 (limit: 1119)
-     Memory: 24.9M
-        CPU: 641ms
-     CGroup: /system.slice/lovcen.service
-             ‣ 13352 /bin/bash /snap/deno/96/bin/wrapper.sh run -A src/main.ts
-
+     ...
 Sep 11 09:08:35 ubuntu systemd[1]: Started Run lovcen bot.
 ```
 

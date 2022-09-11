@@ -7,7 +7,7 @@ import { Lurker } from "../commands/lurk.ts";
 import { Reminder } from "../commands/remind.ts";
 
 function collection<T>(db_client: MongoClient, label: string): Collection<T> {
-	return db_client.database("testing").collection<T>(label)
+	return db_client.database("data").collection<T>(label)
 }
 
 export async function save_stream_stats(db_client: MongoClient, channel: TwitchChannel) {

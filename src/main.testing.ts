@@ -7,7 +7,7 @@ const config = new Config({
 })
 	.join_channels([
 		{
-			has_eventsub: true,
+			// has_eventsub: true,
 			name: "pepega00000",
 		}])
 	.enable_7tv_notifications()

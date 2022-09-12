@@ -9,7 +9,7 @@ const config = new Config({
 	.join_channels([
 		{
 			name: "gkey",
-			has_eventsub: true, // max 1 channel can have it cuz reasons
+			// has_eventsub: true, // max 1 channel can have it cuz reasons
 			subscribe_message: "@{{ NAME }} welcome to the G spot flushE",
 			resubscribe_message: "@{{ NAME }} welcome back to the G spot flushE",
 		},

@@ -356,6 +356,7 @@ export default class Bot {
 	// -------------------------------------------------------------------------
 
 	async init_eventsub() {
+		if (this.cfg.channels.filter(c => c.has_eventsub).length == 0) return;
 		this.cfg.loopback_address = await this.get_loopback_address();
 
 		const router = new Router();

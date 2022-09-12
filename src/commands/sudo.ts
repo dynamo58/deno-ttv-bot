@@ -31,10 +31,13 @@ const Sudo: CommandModule = {
 					is_success: false,
 					output: "Going down FeelsBadMan 👍 ",
 				}
+			case "reboot":
 			case "restart":
 				setTimeout(async () => {
 					const s = Deno.run({ cmd: ["git", "pull", "origin", "main"] })
 					await s.status();
+
+					Deno.env.set("STARTUP_BEFORE_RESTART", ctx.startup_time.valueOf().toString());
 
 					if (Deno.env.get("TESTING")) {
 						Deno.run({ cmd: ["deno", "run", "-A", "src/main.testing.ts", "&!"] });
@@ -44,7 +47,7 @@ const Sudo: CommandModule = {
 						Deno.run({ cmd: ["systemctl", "restart", "lovcen.service"] });
 
 					Log.success(`Goodbye, cruel world`);
-				}, 200);
+				}, 1000);
 
 				return {
 					is_success: true,

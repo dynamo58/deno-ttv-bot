@@ -474,7 +474,11 @@ export default class Bot {
 
 	async run() {
 		Log.success(`Starting up on PID ${Deno.pid} and port ${Deno.env.get("PORT")!}`);
-		this.cfg.startup_time = Deno.env.get("STARTUP_BEFORE_RESTART") ? new Date(parseInt(Deno.env.get("STARTUP_BEFORE_RESTART")!)) : new Date();
+		if (Deno.env.get("STARTUP_BEFORE_RESTART"))
+			this.cfg.startup_time = new Date(parseInt(Deno.env.get("STARTUP_BEFORE_RESTART")!));
+		else
+			this.cfg.startup_time = new Date();
+
 		await this.init_channels();
 		await this.cfg.client.connect();
 

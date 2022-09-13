@@ -34,8 +34,7 @@ const Sudo: CommandModule = {
 			case "reboot":
 			case "restart":
 				setTimeout(async () => {
-					const s = Deno.run({ cmd: ["git", "pull", "origin", "main"] })
-					await s.status();
+					await Deno.run({ cmd: ["git", "pull", "origin", "main"] }).status();
 
 					Deno.env.set("STARTUP_BEFORE_RESTART", ctx.startup_time.valueOf().toString());
 

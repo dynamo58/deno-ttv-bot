@@ -29,7 +29,7 @@ import Wolfram from "./commands/wolfram.ts";
 import Coinflip from "./commands/coinflip.ts";
 import NotifyMe from "./commands/notifyme.ts";
 import Define from "./commands/define.ts";
-import Logs, { RandLog } from "./commands/log.ts";
+import Logs, { RandLog, GetLogs } from "./commands/log.ts";
 import Log from "./Log.ts";
 
 type DatabaseKind = undefined | "mongo";
@@ -112,6 +112,7 @@ export default class Config {
 				["logs", Logs],
 				["randlog", RandLog],
 				["logrand", RandLog],
+				["getlogs", GetLogs],
 			])
 			Log.init({ log_file: cfg.log_file })
 		} catch (e) {

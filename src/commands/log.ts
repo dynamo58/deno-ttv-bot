@@ -102,7 +102,7 @@ export const GetLogs: CommandModule = {
 
 		return {
 			is_success: true,
-			output: `${user_name} has known logs in ${channels_with_logs.length} channels: ${channels_with_logs.join(", ")}`
+			output: `(⚠OUT OF THE TRACKED CHANNELS⚠) ${user_name} has logs in ${channels_with_logs.length}: ${channels_with_logs.join(", ")}`
 		}
 	},
 

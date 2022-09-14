@@ -1,5 +1,6 @@
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import * as twitch from "../apis/twitch.ts";
+import { get_rand_log_in_channel, get_users_available_log_channels } from "../apis/logs_ivr_fi.ts";
 
 
 const Logs: CommandModule = {
@@ -38,10 +39,13 @@ export const RandLog: CommandModule = {
 	sufficient_privilege: 0,
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
-		const r = await fetch(`https://logs.ivr.fi/channel/${ctx.channel.nickname}/random`);
+		const r = await get_rand_log_in_channel(ctx.channel.nickname);
+		if (r.status === 400) return { is_success: false, output: `that channel is not being tracked, sorry.` }
+		if (r.status === 500) return { is_success: false, output: `unknown error has occured, sorry` }
+
 		return {
 			is_success: true,
-			output: await r.text()
+			output: r.data!,
 		}
 	},
 
@@ -61,12 +65,12 @@ export const GetLogs: CommandModule = {
 		let user_name: string | undefined;
 		const kwargs = ctx.kwargs();
 		if (kwargs.get("user")) user_name = kwargs.get("user")
-		else if (ctx.args.length > 0) user_name = ctx.args[1];
+		else if (ctx.args.length > 0) user_name = ctx.args[0];
 
 		let user_id: number | string;
 		if (user_name === undefined) {
-			user_id = ctx.caller.id;
 			user_name = ctx.caller.nickname;
+			user_id = ctx.caller.id;
 		} else {
 			const r = await twitch.get_users(ctx.credentials, [user_name]);
 			if (r.status === 400) return { is_success: false, output: `that user doesn't exist.` }
@@ -74,35 +78,12 @@ export const GetLogs: CommandModule = {
 			user_id = r.data![0].id;
 		}
 
-		const all_channels = (await (await fetch(`https://logs.ivr.fi/channels`, {
-			headers: {
-				'Accept': 'application/json'
-			}
-		})).json()).channels as { userID: string, name: string }[];
-
-		const channels_with_logs: string[] = [];
-
-		for (const c of all_channels) {
-			try {
-				const r = await fetch(`https://logs.ivr.fi/list?channel=${c.name}&username=${user_name}&channelid=${c.userID}&userid=${user_id}`, {
-					headers: {
-						'Accept': 'application/json'
-					}
-				});
-
-				// this will fail if there is no logs
-				// because then the API sends a plaintext
-				await r.json();
-
-				channels_with_logs.push(c.name);
-			}
-			// deno-lint-ignore no-empty
-			catch { }
-		}
+		const channels_with_logs = await get_users_available_log_channels(user_id);
+		if (channels_with_logs.status === 500) return { is_success: false, output: `unknown error occured, sorry` }
 
 		return {
 			is_success: true,
-			output: `(⚠OUT OF THE TRACKED CHANNELS⚠) ${user_name} has logs in ${channels_with_logs.length}: ${channels_with_logs.join(", ")}`
+			output: `(out of tracked channels) ${user_name} has logs in ${channels_with_logs.data!.length}: ${channels_with_logs.data!.join(", ")}`
 		}
 	},
 

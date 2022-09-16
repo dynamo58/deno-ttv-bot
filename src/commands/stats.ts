@@ -28,7 +28,7 @@ const Stats: CommandModule = {
 			const latest = await db.get_latest_stats(ctx.db_client, ctx.channel.id);
 			if (latest === null) return { is_success: false, output: `there is no previous record.` }
 
-			const uptime_fmt = format_duration((new Date()).valueOf() - (new Date(latest!.startup_time)).valueOf(), false);
+			const uptime_fmt = format_duration(latest.duration_hours * 3_600_000, false);
 			const games = latest!.games_played.join(", ");
 			const lines = latest!.messages_sent;
 

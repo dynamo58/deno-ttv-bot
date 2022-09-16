@@ -97,6 +97,6 @@ export async function pull_all(db_client: MongoClient): Promise<{ reminders: Map
 
 export async function get_latest_stats(db_client: MongoClient, channel_user_id: number): Promise<StreamStats | null> {
 	const c = collection<StreamStats>(db_client, "stats")
-	const latest = await c.findOne({ channel_id: channel_user_id });
-	return latest ?? null;
+	const latest = await c.find({ channel_id: channel_user_id }).sort({ x: -1 }).limit(1).toArray();
+	return latest[0] ?? null;
 }

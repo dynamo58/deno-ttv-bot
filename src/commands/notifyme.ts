@@ -19,6 +19,7 @@ const NotifyMe: CommandModule = {
 				return { is_success: false, output: `Please provide a "when" clause, e.g.: ${ctx.cmd_prefix}notifyme when=live` }
 			// deno-lint-ignore no-case-declarations
 			case "live":
+				if (!ctx.db_client) return { is_success: false, output: `this feature is currently not available.` }
 				const res = await db.add_user_as_live_notif_subscriber(ctx.db_client, ctx.channel.id, ctx.caller);
 				switch (res) {
 					case 200: return { is_success: true, output: `you will now get pinged when ${ctx.channel.nickname} goes live.` };

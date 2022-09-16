@@ -9,7 +9,8 @@ git commit -m "$_message"
 
 echo -n "Push also? [y/anything]"
 read _pushprompt
-if [[ "$_pushprompt" == "y"]]; then
+if [ "$_pushprompt" == "y" ]
+then
 	git push origin main
 fi
 

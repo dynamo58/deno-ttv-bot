@@ -36,8 +36,6 @@ const Sudo: CommandModule = {
 				setTimeout(async () => {
 					await Deno.run({ cmd: ["git", "pull", "origin", "main"] }).status();
 
-					Deno.env.set("STARTUP_BEFORE_RESTART", ctx.startup_time.valueOf().toString());
-
 					if (Deno.env.get("TESTING")) {
 						Deno.run({ cmd: ["deno", "run", "-A", "src/main.testing.ts", "&!"] });
 						Deno.exit(0);
@@ -67,7 +65,7 @@ const Sudo: CommandModule = {
 	},
 
 	usage(cmd_prefix: string): string {
-		return `${cmd_prefix}sudo action={kill}`;
+		return `${cmd_prefix}sudo action={kill|restart|reboot}`;
 	}
 }
 

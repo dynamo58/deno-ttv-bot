@@ -1,16 +1,14 @@
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
-import { DOMParser, Element } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
+import { DOMParser, Element } from "https://deno.land/x/deno_dom@v0.1.35-alpha/deno-dom-wasm.ts";
 
 const UpcomingMatch: CommandModule = {
 	sufficient_privilege: 0,
 
-	async execute(ctx: CommandContext): Promise<CommandResult> {
-		const r = await fetch(`https://int.soccerway.com/teams/england/luton-town-fc/712/`);
-
+	async execute(_ctx: CommandContext): Promise<CommandResult> {
 		try {
+			const r = await fetch(`https://int.soccerway.com/teams/england/luton-town-fc/712/`);
 			const document = new DOMParser().parseFromString(await r.text(), "text/html")!;
 			const matches = document.querySelectorAll(".match")!;
-			const test = document.querySelector(".match")!;
 
 			for (let i = 0; i < matches.length; i++) {
 				const el = matches[i] as Element;
@@ -32,17 +30,17 @@ const UpcomingMatch: CommandModule = {
 			console.log(e)
 			return {
 				is_success: false,
-				output: "something went wrong, please try again later"
+				output: "something went wrong, please try again later."
 			}
 		}
 	},
 
 	description(): string {
-		return "Get a \"pong!\" response with the bot's uptime."
+		return "Get the soonest Luton FC game"
 	},
 
 	usage(cmd_prefix: string): string {
-		return `${cmd_prefix}ping`;
+		return `${cmd_prefix}lutonfc`;
 	}
 }
 

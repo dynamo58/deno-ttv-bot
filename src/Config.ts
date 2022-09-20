@@ -104,6 +104,7 @@ export default class Config {
 				["kappa", Kappa],
 				["lurk", Lurk],
 				["afk", Lurk],
+				["brb", Lurk],
 				["wolfram", Wolfram],
 				["math", Wolfram],
 				["cf", Coinflip],
@@ -114,7 +115,7 @@ export default class Config {
 				["randlog", RandLog],
 				["logrand", RandLog],
 				["getlogs", GetLogs],
-				["lutonfc", UpcomingMatch]
+				["lutonfc", UpcomingMatch],
 			])
 			Log.init({ log_file: cfg.log_file })
 		} catch (e) {

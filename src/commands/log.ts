@@ -1,6 +1,6 @@
 import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import * as twitch from "../apis/twitch.ts";
-import { get_rand_log_in_channel, get_users_available_log_channels } from "../apis/logs_ivr_fi.ts";
+import { get_rand_log_in_channel, get_users_available_log_channels, get_rand_log_of_user_in_channel } from "../apis/logs_ivr_fi.ts";
 
 
 const Logs: CommandModule = {
@@ -39,7 +39,13 @@ export const RandLog: CommandModule = {
 	sufficient_privilege: 0,
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
-		const r = await get_rand_log_in_channel(ctx.channel.nickname);
+		const kwargs = ctx.kwargs();
+		let r;
+		if (kwargs.get("user"))
+			r = await get_rand_log_of_user_in_channel(ctx.channel.nickname, kwargs.get("user")!)
+		else
+			r = await get_rand_log_in_channel(ctx.channel.nickname);
+
 		if (r.status === 400) return { is_success: false, output: `that channel is not being tracked, sorry.` }
 		if (r.status === 500) return { is_success: false, output: `unknown error has occured, sorry` }
 

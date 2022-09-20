@@ -42,7 +42,7 @@ export const RandLog: CommandModule = {
 		const kwargs = ctx.kwargs();
 		let r;
 		if (kwargs.get("user"))
-			r = await get_rand_log_of_user_in_channel(ctx.channel.nickname, kwargs.get("user")!)
+			r = await get_rand_log_of_user_in_channel("gkey", kwargs.get("user")!);
 		else
 			r = await get_rand_log_in_channel(ctx.channel.nickname);
 

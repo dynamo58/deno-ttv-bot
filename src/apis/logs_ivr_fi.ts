@@ -16,7 +16,7 @@ export async function get_rand_log_in_channel(channel_name: string): Promise<API
 
 export async function get_rand_log_of_user_in_channel(channel_name: string, user_name: string): Promise<APICallResult<RandLogResponse>> {
 	try {
-		const r = await fetch(`/channel/${channel_name}/${user_name}/{username}`);
+		const r = await fetch(`https://logs.ivr.fi/channel/${channel_name}/user/${user_name}/random`);
 		const body = await r.text();
 
 		if (body === "could not load logs") return new APICallResult(400);

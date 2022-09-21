@@ -21,7 +21,7 @@ export async function get_weather_str(area_name: string): Promise<APICallResult<
 		const humid = "🌫️ " + weather.current_condition[0].humidity + "%";
 		const pressure = "🔽 " + weather.current_condition[0].pressure + " hPa";
 		const precip = "💧 " + weather.current_condition[0].precipMM + " mm";
-		const wind = dir + weather.current_condition[0].windspeedKmph + " km/h";
+		const wind = dir_str + weather.current_condition[0].windspeedKmph + " km/h";
 
 		let area = '';
 		let country = '';
@@ -35,6 +35,6 @@ export async function get_weather_str(area_name: string): Promise<APICallResult<
 			// deno-lint-ignore no-empty
 		} catch { }
 
-		return new APICallResult(200, `Weather in ${area}, ${country}: ${temp}, ${humid}, ${pressure}, ${precip}, ${dir_str} ${wind}`);
+		return new APICallResult(200, `weather in ${area}, ${country}: ${temp}, ${humid}, ${pressure}, ${precip}, ${wind}`);
 	} catch { return new APICallResult(500) }
 }

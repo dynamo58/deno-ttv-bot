@@ -66,15 +66,10 @@ const Kappa: CommandModule = {
 		`;
 
 		const result = await run_code("go", code);
-		if (result.status !== 200) return {
-			is_success: false,
-			output: `something went wrong FeelsDankMan . Please try again later.`
-		}
 
-		return {
-			is_success: true,
-			output: `the soonest you'll have golden Kappa is on ${result.data!.output}`,
-		}
+		// should really be 200 or 500
+		if (result.status !== 200) return new CommandResult(500, EXTERNAL_API_FAIL_MESSAGE);
+		return new CommandResult(200, `the soonest you'll have golden Kappa is on ${result.data!.output}`);
 	},
 
 	description(): string {

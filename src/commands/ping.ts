@@ -10,10 +10,7 @@ const Ping: CommandModule = {
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const uptime_mls = (new Date()).valueOf() - ctx.startup_time.valueOf();
 
-		return {
-			is_success: true,
-			output: `Pong! Running for ${format_duration(uptime_mls, false)}.`,
-		}
+		return new CommandResult(200, `Pong! Running for ${format_duration(uptime_mls, false)}.`);
 	},
 
 	description(): string {

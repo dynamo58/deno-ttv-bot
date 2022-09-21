@@ -16,19 +16,19 @@ const NotifyMe: CommandModule = {
 
 		switch (kwargs.get("when")) {
 			case undefined:
-				return { is_success: false, output: `Please provide a "when" clause, e.g.: ${ctx.cmd_prefix}notifyme when=live` }
+				return new CommandResult(400, `Please provide a "when" clause, e.g.: ${ctx.cmd_prefix}notifyme when=live`);
 			// deno-lint-ignore no-case-declarations
 			case "live":
-				if (!ctx.db_client) return { is_success: false, output: `this feature is currently not available.` }
+				if (!ctx.db_client) return new CommandResult(500, `this feature is currently not available.`);
 				const res = await db.add_user_as_live_notif_subscriber(ctx.db_client, ctx.channel.id, ctx.caller);
 				switch (res) {
-					case 200: return { is_success: true, output: `you will now get pinged when ${ctx.channel.nickname} goes live.` };
-					case 400: return { is_success: false, output: `you are already subscribed to the live notification.` };
-					case 500: return { is_success: false, output: `something went wrong, please try again later.` };
+					case 200: return new CommandResult(200, `you will now get pinged when ${ctx.channel.nickname} goes live.`);
+					case 400: return new CommandResult(400, `you are already subscribed to the live notification.`);
+					case 500: return new CommandResult(500, `something went wrong, please try again later.`);
 				}
 				break;
 			default:
-				return { is_success: false, output: `unsupported "when" clause. See the usage command ApuApustaja` };
+				return new CommandResult(400, `unsupported "when" clause. See the usage command for more detail.`);
 		}
 
 		throw new Error("UNREACHABLE");

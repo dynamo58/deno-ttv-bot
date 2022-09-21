@@ -9,10 +9,7 @@ const Coinflip: CommandModule = {
 		if (Math.random() < 0.5) out = "TAILS";
 		else out = "HEADS";
 
-		return {
-			is_success: true,
-			output: `it is... ${out}!`,
-		}
+		return new CommandResult(200, `it is... ${out}!`);
 	},
 
 	description(): string {

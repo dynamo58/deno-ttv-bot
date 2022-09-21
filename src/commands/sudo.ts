@@ -7,30 +7,21 @@ const Sudo: CommandModule = {
 
 	// deno-lint-ignore require-await
 	async execute(ctx: CommandContext): Promise<CommandResult> {
-		if (!ctx.sudoers.includes(ctx.caller.id)) return {
-			is_success: false,
-			output: `Only hackermen allowed B)`,
-		}
+		if (!ctx.sudoers.includes(ctx.caller.id)) return new CommandResult(400, `only hackermen allowed.`);
 
 		let action: string | undefined;
 		const kwargs = ctx.kwargs();
 		if (kwargs.get("action")) action = kwargs.get("action");
 		else if (ctx.args.length > 0) action = ctx.args[0];
 
-		if (action === undefined) return {
-			is_success: false,
-			output: `No action an provided.`,
-		}
+		if (action === undefined) return new CommandResult(400, "no action provided");
 
 		switch (action.toLowerCase()) {
 			case "kill":
 				setTimeout(() => {
 					Deno.exit(0);
 				}, 100);
-				return {
-					is_success: false,
-					output: "Going down FeelsBadMan 👍 ",
-				}
+				return new CommandResult(200, "Going down FeelsBadMan 👍 ");
 			case "reboot":
 			case "restart":
 				setTimeout(async () => {
@@ -46,16 +37,9 @@ const Sudo: CommandModule = {
 					Log.success(`Goodbye, cruel world`);
 				}, 1000);
 
-				return {
-					is_success: true,
-					output: `pulling origin, rebooting... MrDestructoid`,
-					system_commands: ["if (this.db_client) this.cfg.channels.forEach(async c => await db.save_stream_stats(this.db_client!, c))"]
-				}
+				return new CommandResult(200, `pulling origin, rebooting... MrDestructoid`, ["if (this.db_client) this.cfg.channels.forEach(async c => await db.save_stream_stats(this.db_client!, c))"]);
 			default:
-				return {
-					is_success: false,
-					output: `Subcommand ${ctx.args[0]} not recognized.`
-				}
+				return new CommandResult(400, `subcommand ${ctx.args[0]} not recognized.`);
 		}
 
 	},

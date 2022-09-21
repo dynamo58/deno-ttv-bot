@@ -10,10 +10,7 @@ const Tf: CommandModule = {
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		if (ctx.highest_priv < this.sufficient_privilege)
-			return {
-				is_success: false,
-				output: "You must be at least VIP to use this command.",
-			}
+			return new CommandResult(400, MVB_PRIVILEGE_NOT_REACHED_MESSAGE);
 
 		const kwargs = ctx.kwargs();
 		let count: number | null = null;
@@ -26,7 +23,7 @@ const Tf: CommandModule = {
 		}
 
 		const res = (await twitch.get_chatters(ctx.channel.nickname));
-		if (res.status !== 200) return { is_success: false, output: `@${ctx.caller} something messed up ApuApustaja TeaTime` }
+		if (res.status !== 200) return new CommandResult(500, UNKNOWN_ERROR_MESSAGE);
 		const _c = res.data!.chatters;
 		const chatters = [..._c.admins, ..._c.broadcaster, ..._c.global_mods, ..._c.moderators, ..._c.staff, ..._c.viewers, ..._c.vips];
 		// TODO: generating randoms and skipping duplicated might be better, no????
@@ -34,10 +31,7 @@ const Tf: CommandModule = {
 
 		const chosen = chatters.slice(0, Math.min(chatters.length, count));
 
-		return {
-			is_success: true,
-			output: `@${chosen.join(" @")} :tf:`,
-		}
+		return new CommandResult(200, `@${chosen.join(" @")} :tf:`);
 	},
 
 	description(): string {

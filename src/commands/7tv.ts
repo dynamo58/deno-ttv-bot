@@ -10,7 +10,7 @@ const New7Tv: CommandModule = {
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const emotes_res = await get_7tv_emotes(ctx.channel.nickname);
-		if (emotes_res.status !== 200) return { is_success: false, output: `the 7tv API failed, please try again later` }
+		if (emotes_res.status !== 200) new CommandResult(500, EXTERNAL_API_FAIL_MESSAGE)
 		const emotes = emotes_res.data!;
 
 		const kwargs = ctx.kwargs();
@@ -19,17 +19,13 @@ const New7Tv: CommandModule = {
 		if (_count) {
 			try { count = Math.clamp(parseInt(_count), MIN_COUNT, MAX_COUNT) }
 			catch { count = DEFAULT_COUNT }
-		} else {
+		} else
 			count = DEFAULT_COUNT;
-		}
 		const latest = emotes
 			.slice(-count)
 			.map(e => e.code);
 
-		return {
-			is_success: true,
-			output: `Recently added 7tv emotes: ${latest.join(" ")}`,
-		}
+		return new CommandResult(200, `Recently added 7tv emotes: ${latest.join(" ")}`)
 	},
 
 	description(): string {

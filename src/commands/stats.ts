@@ -24,26 +24,20 @@ const Stats: CommandModule = {
 
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		if (ctx.args.includes("last")) {
-			if (!ctx.db_client) return { is_success: false, output: `this feature is currently not available, sorry PoroSad` }
+			if (!ctx.db_client) return new CommandResult(500, FEATURE_NOT_AVAILABLE_MESSAGE);
 			const latest = await db.get_latest_stats(ctx.db_client, ctx.channel.id);
-			if (latest === null) return { is_success: false, output: `there is no previous record.` }
+			if (latest === null) return new CommandResult(400, `there is no previous record.`)
 
 			const uptime_fmt = format_duration(latest.duration_hours * 3_600_000, false);
 			const games = latest!.games_played.join(", ");
 			const lines = latest!.messages_sent;
 
-			return {
-				is_success: true,
-				output: `Uptime: ${uptime_fmt} | Games played: ${games} | Message count: ${lines}`,
-			}
+			return new CommandResult(200, `Uptime: ${uptime_fmt} | Games played: ${games} | Message count: ${lines}`);
 		}
 
 
 		if (ctx.channel.uptime_stats === null)
-			return {
-				is_success: true,
-				output: `channel is not live.`,
-			}
+			return new CommandResult(200, CHANNEL_NOT_LIVE_MESSAGE);
 
 		const uptime_fmt = format_duration((new Date()).valueOf() - (ctx.channel.uptime_stats!.startup_time).valueOf(), false);
 		const games = ctx.channel.uptime_stats!.games_played.join(", ");
@@ -52,11 +46,8 @@ const Stats: CommandModule = {
 			const most_active_chatter = await get_most_active_chatter_nickname(ctx.credentials, ctx.channel.uptime_stats!.user_counts);
 			const chatter_str = most_active_chatter === null ? "" : `| Most active chatter: ${most_active_chatter[0]} with ${most_active_chatter[1]} messages Chatting`;
 
-			return {
-				is_success: true,
-				output: `Uptime: ${uptime_fmt} | Games played: ${games} | Message count: ${lines} ${chatter_str}`,
-			}
-		} catch { return { is_success: false, output: `something went haywire ApuApustaja TeaTime` } }
+			return new CommandResult(200, `Uptime: ${uptime_fmt} | Games played: ${games} | Message count: ${lines} ${chatter_str}`);
+		} catch { return new CommandResult(500, UNKNOWN_ERROR_MESSAGE) }
 	},
 
 	description(): string {

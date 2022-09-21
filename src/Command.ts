@@ -99,10 +99,16 @@ export class CommandContext {
 	}
 }
 
-export interface CommandResult {
-	is_success: boolean,
-	output: string | null,
-	system_commands?: string[]
+export class CommandResult {
+	status: Result;
+	output: string | null;
+	__internal_commands?: string[];
+
+	constructor(status: Result, output: string | null, internal_commands?: string[]) {
+		this.status = status;
+		this.output = output;
+		this.__internal_commands = internal_commands;
+	}
 }
 
 // all of the components (functions) that a command should have 

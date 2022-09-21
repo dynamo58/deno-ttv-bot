@@ -7,10 +7,7 @@ const Commands: CommandModule = {
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const global_cmds = ctx.all_commands.join(", ");
 
-		return {
-			is_success: true,
-			output: `global commands: ${global_cmds}`,
-		}
+		return new CommandResult(200, `global commands: ${global_cmds}`);
 	},
 
 	description(): string {

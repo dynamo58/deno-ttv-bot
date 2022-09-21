@@ -23,11 +23,7 @@ const Lurk: CommandModule = {
 			message,
 		}
 
-		return {
-			is_success: true,
-			output: `you are now lurking: ${message ?? "<no message>"}`,
-			system_commands: [`this.cfg.lurkers.set(${ctx.caller.id}, ${JSON.stringify(lurker)})`]
-		}
+		return new CommandResult(200, `you are now lurking: ${message ?? "<no message>"}`, [`this.cfg.lurkers.set(${ctx.caller.id}, ${JSON.stringify(lurker)})`]);
 	},
 
 	description(): string {

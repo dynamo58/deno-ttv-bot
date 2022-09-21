@@ -21,18 +21,12 @@ const UpcomingMatch: CommandModule = {
 				const host_team = el.querySelector(".team-a")!.textContent;
 				const guest_team = el.querySelector(".team-b")!.textContent;
 
-				return { is_success: true, output: `LUTONFC ${host_team} vs ${guest_team} at ${date} ${time}.` }
+				return new CommandResult(200, `LUTONFC ${host_team} vs ${guest_team} at ${date} ${time}.`);
 			}
 
-			return { is_success: false, output: `LUTONFC no match found.` }
+			return new CommandResult(503, `LUTONFC no match found.`);
 
-		} catch (e) {
-			console.log(e)
-			return {
-				is_success: false,
-				output: "something went wrong, please try again later."
-			}
-		}
+		} catch { return new CommandResult(500, UNKNOWN_ERROR_MESSAGE) }
 	},
 
 	description(): string {

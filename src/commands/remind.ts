@@ -16,8 +16,8 @@ const Remind: CommandModule = {
 		let target_user_id;
 		if (kwargs.get("user")) {
 			const res = await twitch.id_from_nick(ctx.credentials, [kwargs.get("user")!]);
-			if (res.status !== 200) return { is_success: false, output: `something went wrong FeelsDankMan TeaTime (external error).` }
-			if (res.data!.length !== 1) return { is_success: false, output: `that user doesn't exist.` }
+			if (res.status !== 200) return new CommandResult(502, EXTERNAL_API_FAIL_MESSAGE);
+			if (res.data!.length !== 1) return new CommandResult(400, USER_DOESNT_EXIST_MESSAGE);
 
 			target_user_id = res.data![0]
 		} else
@@ -26,7 +26,7 @@ const Remind: CommandModule = {
 		let date;
 		if (kwargs.get("in")) {
 			const d = kwargs.get("in")!.parse_to_date()
-			if (d === null) return { is_success: false, output: `bad input, usage: ${this.usage(ctx.cmd_prefix)}` }
+			if (d === null) return new CommandResult(400, `bad input, usage: ${this.usage(ctx.cmd_prefix)}`);
 			date = d
 		} else { date = new Date() }
 
@@ -38,12 +38,7 @@ const Remind: CommandModule = {
 			from_nick: ctx.caller.nickname,
 		}
 
-		return {
-			is_success: true,
-			output: `reminder saved.`,
-
-			system_commands: [`this.cfg.reminders.get(${target_user_id}) ? this.cfg.reminders.set(${target_user_id}, [...this.cfg.reminders.get(${target_user_id}), ${JSON.stringify(reminder)}]) : this.cfg.reminders.set(${target_user_id}, [${JSON.stringify(reminder)}])`]
-		}
+		return new CommandResult(200, "reminder saved.", [`this.cfg.reminders.get(${target_user_id}) ? this.cfg.reminders.set(${target_user_id}, [...this.cfg.reminders.get(${target_user_id}), ${JSON.stringify(reminder)}]) : this.cfg.reminders.set(${target_user_id}, [${JSON.stringify(reminder)}])`]);
 	},
 
 	description(): string {

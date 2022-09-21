@@ -295,12 +295,13 @@ export default class Bot {
 					const cmd = this.cfg.commands.get(ctx.cmd);
 					if (cmd) {
 						const res = await cmd!.execute(ctx);
-						if (res.is_success)
-							c.send(`@${ctx.caller.nickname} ${res.output}` || "cmd succeded");
+						if (res.status === 200)
+							c.send(`@${ctx.caller.nickname} ${res.output}` || "command succeeded.");
 						else
-							c.send(`@${ctx.caller.nickname} ${res.output}` || "cmd failed");
-						if (res.system_commands)
-							for (const c of res.system_commands) try { eval(c) } catch (e) { console.log(e) }
+							c.send(`@${ctx.caller.nickname} ${res.output}` || "command failed.");
+
+						if (res.__internal_commands)
+							for (const c of res.__internal_commands) try { eval(c) } catch (e) { console.log(e) }
 
 						Log.info(`Ran ${ctx.cmd} in ${ircmsg.channel} by ${ircmsg.username}`);
 					}

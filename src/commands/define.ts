@@ -51,34 +51,20 @@ const Ping: CommandModule = {
 		if (kwargs.get("word")) word = kwargs.get("word")!;
 		else if (ctx.args.length > 0) word = ctx.args[0];
 
-		if (!word) return {
-			is_success: false,
-			output: `please provide a word!`
-		}
+		if (!word) return new CommandResult(400, `no word provided.`);
 
 		try {
 			const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en_US/${word}`);
 			const json = (await res.json()) as Res;
 
-			if (json.length === 0) return {
-				is_success: false,
-				output: `Word not found or recognized`
-			}
+			if (json.length === 0) return new CommandResult(400, `word not found or not recognized.`);
 
 			const phonetic = json[0].phonetics.at(0)?.text ?? "";
 			const category = json[0].meanings[0].partOfSpeech;
 			const definition = json[0].meanings[0].definitions[0].definition;
 
-			return {
-				is_success: true,
-				output: `${word} ${phonetic} (${category}) - ${definition}`
-			}
-		} catch {
-			return {
-				is_success: false,
-				output: `something bricked itself, please try again later.`
-			}
-		}
+			return new CommandResult(200, `${word} ${phonetic} (${category}) - ${definition}`)
+		} catch { return new CommandResult(500, UNKNOWN_ERROR_MESSAGE) }
 	},
 
 	description(): string {

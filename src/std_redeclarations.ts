@@ -8,7 +8,8 @@ declare global {
 	enum Result {
 		Success = 200,
 		UserError = 400,
-		UnknownOrServerError = 500,
+		ServerError = 500,
+		ExternalServiceError = 503,
 	}
 
 	interface Math {
@@ -19,6 +20,13 @@ declare global {
 		parse_to_date(): Date | null;
 		split_at_every_char_to_map(c: string): Map<string, string>;
 	}
+
+	const EXTERNAL_API_FAIL_MESSAGE = "external services have failed, please try again later.";
+	const UNKNOWN_ERROR_MESSAGE = "an unknown error has occured.";
+	const USER_DOESNT_EXIST_MESSAGE = "that user doesn't exist.";
+	const FEATURE_NOT_AVAILABLE_MESSAGE = "this feature is currently not available, sorry.";
+	const CHANNEL_NOT_LIVE_MESSAGE = "channel is currently not live.";
+	const MVB_PRIVILEGE_NOT_REACHED_MESSAGE = "you must be either least mod, broadcaster or a VIP to use this feature."
 }
 
 // example according to intended use:

@@ -2,7 +2,6 @@ import { CommandContext, CommandModule, CommandResult } from "../Command.ts";
 import * as twitch from "../apis/twitch.ts";
 import { get_rand_log_in_channel, get_users_available_log_channels, get_rand_log_of_user_in_channel } from "../apis/logs_ivr_fi.ts";
 
-
 const Logs: CommandModule = {
 	sufficient_privilege: 0,
 
@@ -20,10 +19,7 @@ const Logs: CommandModule = {
 		else if (ctx.args.length > 1 && !ctx.args[1].includes('#'))
 			channel = ctx.args[1];
 
-		return {
-			is_success: true,
-			output: `ApuApustaja TakingNotes0 https://logs.ivr.fi/?channel=${channel}&username=${user}`,
-		}
+		return new CommandResult(200, `ApuApustaja TakingNotes0 https://logs.ivr.fi/?channel=${channel}&username=${user}`);
 	},
 
 	description(): string {
@@ -46,13 +42,10 @@ export const RandLog: CommandModule = {
 		else
 			r = await get_rand_log_in_channel(ctx.channel.nickname);
 
-		if (r.status === 400) return { is_success: false, output: `that channel is not being tracked, sorry.` }
-		if (r.status === 500) return { is_success: false, output: `unknown error has occured, sorry` }
+		if (r.status === 400) return new CommandResult(400, `that channel is not being tracked, sorry.`);
+		if (r.status === 500) return new CommandResult(500, UNKNOWN_ERROR_MESSAGE);
 
-		return {
-			is_success: true,
-			output: r.data!,
-		}
+		return new CommandResult(200, r.data!);
 	},
 
 	description(): string {
@@ -79,18 +72,15 @@ export const GetLogs: CommandModule = {
 			user_id = ctx.caller.id;
 		} else {
 			const r = await twitch.get_users(ctx.credentials, [user_name]);
-			if (r.status === 400) return { is_success: false, output: `that user doesn't exist.` }
-			if (r.status === 500) return { is_success: false, output: `unknown error occured, please try again later` }
+			if (r.status === 400) return new CommandResult(400, USER_DOESNT_EXIST_MESSAGE);
+			if (r.status === 500) return new CommandResult(500, UNKNOWN_ERROR_MESSAGE);
 			user_id = r.data![0].id;
 		}
 
 		const channels_with_logs = await get_users_available_log_channels(user_id);
-		if (channels_with_logs.status === 500) return { is_success: false, output: `unknown error occured, sorry` }
+		if (channels_with_logs.status === 500) return new CommandResult(500, UNKNOWN_ERROR_MESSAGE);
 
-		return {
-			is_success: true,
-			output: `(out of tracked channels) ${user_name} has logs in ${channels_with_logs.data!.length}: ${channels_with_logs.data!.join(", ")}`
-		}
+		return new CommandResult(200, `(out of tracked channels) ${user_name} has logs in ${channels_with_logs.data!.length}: ${channels_with_logs.data!.join(", ")}`);
 	},
 
 	description(): string {

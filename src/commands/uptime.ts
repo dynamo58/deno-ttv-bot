@@ -9,27 +9,18 @@ const Uptime: CommandModule = {
 		if (ctx.channel.uptime_stats) {
 			const uptime_hrs =
 				format_duration((new Date()).valueOf() - (ctx.channel.uptime_stats!.startup_time).valueOf(), false);
-			return {
-				is_success: true,
-				output: `@${ctx.caller} ${ctx.channel.nickname} has been live for ${uptime_hrs}.`,
-			}
+			return new CommandResult(200, `@${ctx.caller} ${ctx.channel.nickname} has been live for ${uptime_hrs}.`);
 		}
 
 		const res = await twitch.get_channel(ctx.credentials, ctx.channel.nickname);
-		if (res.status !== 200) return { is_success: false, output: `@${ctx.caller} something messed up ApuApustaja TeaTime` }
+		if (res.status !== 200) return new CommandResult(500, `something messed up ApuApustaja TeaTime`);
 		const channel_info = res.data!;
 
 		if (channel_info.data.length === 0)
-			return {
-				is_success: false,
-				output: `${ctx.caller.nickname}, ${ctx.channel.nickname} is not live.`
-			};
+			return new CommandResult(400, CHANNEL_NOT_LIVE_MESSAGE);
 
 		const uptime_hrs = format_duration((new Date()).valueOf() - (new Date(channel_info.data[0].started_at)).valueOf(), false);
-		return {
-			is_success: true,
-			output: `@${ctx.caller.nickname} ${ctx.channel.nickname} has been live for ${uptime_hrs}.`,
-		}
+		return new CommandResult(200, `@${ctx.caller.nickname} ${ctx.channel.nickname} has been live for ${uptime_hrs}.`);
 	},
 
 	description(): string {

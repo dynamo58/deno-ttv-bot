@@ -7,19 +7,12 @@ const Weather: CommandModule = {
 	async execute(ctx: CommandContext): Promise<CommandResult> {
 		const loc = ctx.kwargs().get("location");
 		if (!loc)
-			return {
-				is_success: false,
-				output: `Please provide a location.`,
-			}
-
+			return new CommandResult(400, `no location provided`);
 		const res = await get_weather_str(loc);
-		if (res.status !== 200) return { is_success: false, output: `@${ctx.caller} something messed up ApuApustaja TeaTime` }
+		if (res.status !== 200) return new CommandResult(500, UNKNOWN_ERROR_MESSAGE);
 		const weather = res.data!;
 
-		return {
-			is_success: true,
-			output: `${weather}`
-		}
+		return new CommandResult(200, weather);
 	},
 
 	description(): string {

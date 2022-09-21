@@ -25,15 +25,9 @@ const config = new Config({
 	.add_cronjob({
 		requires_live: true,
 		channel_names: ["gkey"],
-		period: [2 * 60, 15 * 60],
+		period: [10 * 60, 15 * 60],
 		execute: async () => `!showemote ${(await get_7tv_emotes("gkey")).unwrap().random().code}`,
 	})
-	// .add_cronjob({
-	// 	requires_live: true,
-	// 	channel_names: ["gkey"],
-	// 	period: [30 * 60, 60 * 60],
-	// 	execute: () => `Don't see emotes like AlienUnpleased  or WALKING ? Get the 7tv browser extension at https://7tv.app/ for access to tons of cool emotes in the chat!`,
-	// })
 	.add_sudoers(["pepega00000"]);
 const bot = new Bot(await config);
 await bot.run();

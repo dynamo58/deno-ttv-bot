@@ -34,6 +34,6 @@ const config = new Config({
 		period: [10 * 60, 45 * 60],
 		execute: () => `BebeLa 👉 Posture  ML`,
 	})
-	.add_sudoers(["pepega00000"]);
+	.add_sudoers(["typhu26"]);
 const bot = new Bot(await config);
 await bot.run();

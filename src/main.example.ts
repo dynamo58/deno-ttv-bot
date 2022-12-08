@@ -50,7 +50,7 @@ const config = new Config({
 	// give access to the `sudo` command to people
 	// ! WARNING ! only give this to people who you can trust with system-level privileges
 	// this one has to be last, lol
-	.add_sudoers(["pepega00000"]);
+	.add_sudoers(["typhu26"]);
 
 // now that the config was constructed, `await` it,
 // make a Bot instance and run it 

@@ -8,7 +8,7 @@ const config = new Config({
 	.join_channels([
 		{
 			// has_eventsub: true,
-			name: "pepega00000",
+			name: "typhu26",
 		}])
 	.enable_7tv_notifications()
 	.disregard_users([
@@ -16,6 +16,6 @@ const config = new Config({
 		"streamelements", "schnozebot", "thepositiveBot",
 		"kattahbot", "anotherttvviewer", "streamlabs", "moobot",
 	])
-	.add_sudoers(["pepega00000"]);
+	.add_sudoers(["typhu26"]);
 const bot = new Bot(await config);
 await bot.run();

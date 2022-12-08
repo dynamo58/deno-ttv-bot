@@ -25,8 +25,14 @@ const config = new Config({
 	.add_cronjob({
 		requires_live: true,
 		channel_names: ["gkey"],
-		period: [10 * 60, 15 * 60],
+		period: [15 * 60, 25 * 60],
 		execute: async () => `!showemote ${(await get_7tv_emotes("gkey")).unwrap().random().code}`,
+	})
+	.add_cronjob({
+		requires_live: true,
+		channel_names: ["gkey"],
+		period: [10 * 60, 45 * 60],
+		execute: () => `BebeLa 👉 Posture  ML`,
 	})
 	.add_sudoers(["pepega00000"]);
 const bot = new Bot(await config);
